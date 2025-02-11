@@ -4,11 +4,11 @@ class PipeType:
     """
     A class representing a type of pipe with connections in four directions: up, right, down, and left.
     """
-    def __init__(self, arr: list):
+    def __init__(self, arr: list[bool]):
         """
-        Initialize a PipeType with an array of four elements representing connections.
+        Initialize a PipeType with an array of four booleans representing openings
         
-        :param arr: A list of four elements indicating connections in the order [up, right, down, left].
+        :param arr: A list of four booleans indicating whether there is an openings in the order [up, right, down, left].
         :raises Exception: If the length of the array is not 4.
         """
         if len(arr) == 4:
@@ -20,10 +20,8 @@ class Variable:
     """
     A class representing a variable for a pipe at each location in the CSP.
     """
-    name: tuple
-    domain: list[PipeType]
 
-    def __init__(self, name: tuple, domain: list[PipeType], assignment: Optional[PipeType]):
+    def __init__(self, name: tuple, domain: list[PipeType], assignment: Optional[PipeType]=None):
         """
         Initialize a Variable with a name, domain, and an optional assignment.
         
@@ -91,7 +89,7 @@ class Constraint:
         
         :return: A list of Variable objects representing the scope.
         """
-        return self.scope
+        return list(self.scope)
 
     def check_domains(self):
         """
