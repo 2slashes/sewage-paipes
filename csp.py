@@ -15,6 +15,70 @@ class PipeType:
             self.arr = arr
         else:
             raise Exception("Cannot make pipe type with array of length != 4")
+        
+    def __eq__(self, other):
+        """
+        Compare two PipeType objects for equality.
+        
+        :param other: A PipeType object to compare to.
+        :return: True if the two PipeType objects are equal, False otherwise.
+        """
+        return self.arr == other.arr
+    
+    def __repr__(self):
+        """
+        Return a string representation of the PipeType.
+        
+        :return: A string representing the PipeType.
+        """
+        return f"PipeType({self.arr})"
+    
+class DomainGenerator:
+    all_domain = [
+        PipeType([True, True, True, False]),
+        PipeType([True, True, False, True]),
+        PipeType([True, True, False, False]),
+        PipeType([True, False, True, True]),
+        PipeType([True, False, True, False]),
+        PipeType([True, False, False, True]),
+        PipeType([True, False, False, False]),
+        PipeType([False, True, True, True]),
+        PipeType([False, True, True, False]),
+        PipeType([False, True, False, True]),
+        PipeType([False, True, False, False]),
+        PipeType([False, False, True, True]),
+        PipeType([False, False, True, False]),
+        PipeType([False, False, False, True]),
+    ]
+
+    @staticmethod
+    def generate_domain(top: bool, right: bool, bottom: bool, left: bool):
+        """
+        Generate a domain based on the four boolean flags:
+        if i == 0: 0 is false (top)
+        if i == n-1: 2 is false (bottom)
+
+        if j == 0: 3 is false (left)
+        if j == n-1: 1 is false (right)
+
+        :param top: A boolean indicating if the top of the pipe is blocked.
+        :param right: A boolean indicating if the right of the pipe is blocked.
+        :param bottom: A boolean indicating if the bottom of the pipe is blocked.
+        :param left: A boolean indicating if the left of the pipe is blocked.
+        :return: A list of PipeType objects representing the domain.
+        
+        """
+        domain = DomainGenerator.all_domain.copy()
+        if top:
+            domain = [pipe for pipe in domain if not pipe.arr[0]]
+        elif right:
+            domain = [pipe for pipe in domain if not pipe.arr[1]]
+        if bottom:
+            domain = [pipe for pipe in domain if not pipe.arr[2]]
+        elif left:
+            domain = [pipe for pipe in domain if not pipe.arr[3]]
+        return domain
+
 
 class Variable:
     """
@@ -66,6 +130,21 @@ class Variable:
         :param assignment: A PipeType object to be assigned to the variable.
         """
         self.assignment = assignment
+    
+    def unassign(self):
+        """
+        Unassign the variable by setting the assignment to None.
+        """
+        self.assignment = None
+    
+    def __repr__(self):
+        """
+        Return a string representation of the variable.
+        
+        :return: A string representing the variable.
+        """
+        ass = "Unassigned" if self.assignment is None else self.assignment
+        return f"Variable {self.name}: {ass} in {self.active_domain}"
     
 class Constraint:
     """
