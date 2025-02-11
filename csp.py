@@ -61,3 +61,11 @@ class Constraint:
     
     def remove_from_scope(self, var: Variable):
         self.scope.remove(var)
+
+class csp:
+    '''
+    csp
+    '''
+    def __init__(self, vars: list[Variable], cons: list[Constraint]):
+        self.vars = vars
+        self.cons = cons
