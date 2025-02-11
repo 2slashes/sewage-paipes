@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Callable
 
 
 class PipeType:
@@ -42,16 +42,26 @@ class Constraint:
     '''
     Constraint for a CSP
     '''
-    def __init__(self, name, sat, vars):
+    def __init__(self, name: str, sat: Callable[[list[Variable]], bool], scope: list[Variable]):
         self.name = name
-        self.sat = sat
-        self.vars = vars
-
-    def check_tuple(self, t):
-        return self.sat(t)
+        self.check_tuple = sat
+        self.scope = scope
     
-    def get_vars(self):
-        return vars
+    def get_scope(self):
+        return self.scope
+
+    def check_domains(self):
+        for var in self.vars:
+            if not len(var.active_domain):
+                return False
+        return True
+
+    def add_to_scope(self, var: Variable):
+        self.scope.append(var)
+    
+    def remove_from_scope(self, var: Variable):
+        self.scope.remove(Variable)
+
 
 # csp class
 # 
