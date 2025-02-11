@@ -60,8 +60,4 @@ class Constraint:
         self.scope.append(var)
     
     def remove_from_scope(self, var: Variable):
-        self.scope.remove(Variable)
-
-
-# csp class
-# 
+        self.scope.remove(var)
