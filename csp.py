@@ -34,7 +34,7 @@ class DomainGenerator:
         :param right: A boolean indicating if the right of the pipe is blocked.
         :param bottom: A boolean indicating if the bottom of the pipe is blocked.
         :param left: A boolean indicating if the left of the pipe is blocked.
-        :return: A list of list of bool objects representing the domain.
+        :return: A list of PipeType objects representing the domain.
         
         """
         domain = DomainGenerator.all_domain.copy()
@@ -59,19 +59,19 @@ class Variable:
         Initialize a Variable with a name, domain, and an optional assignment.
         
         :param name: A tuple representing the name of the variable.
-        :param domain: A list of list of bool objects representing the domain of the variable.
-        :param assignment: An optional list of bool representing the current assignment.
+        :param domain: A list of PipeType objects representing the domain of the variable.
+        :param assignment: An optional PipeType object representing the current assignment.
         """
         self.name = location
         self.domain = domain
         self.active_domain = domain
-        self.assignment = assignment
+        if assignment is not None:
+            self.assign(assignment)
 
     def get_domain(self):
         """
         Get the domain of the variable.
-        
-        :return: A list of list of bool representing the domain.
+        :return: A list of PipeType objects representing the domain.
         """
         return list(self.domain)
     
@@ -79,25 +79,28 @@ class Variable:
         """
         Get the current assignment of the variable.
         
-        :return: A list of bool object representing the current assignment.
+        :return: A PipeType object representing the current assignment.
         """
         return self.assignment
     
     def prune(self, to_remove: list[PipeType]):
         """
-        Prune the active domain by removing specified list of bool objects.
+        Prune the active domain by removing specified PipeType objects.
         
-        :param to_remove: A list of list of bool to be removed from the active domain.
+        :param to_remove: A list of PipeType to be removed from the active domain.
         """
         for pipe in to_remove:
             self.active_domain.remove(pipe)
         
     def assign(self, assignment: PipeType):
         """
-        Assign a list of bool to the variable.
+        Assign a PipeType to the variable.
         
-        :param assignment: A list of bool to be assigned to the variable.
+        :param assignment: A PipeType to be assigned to the variable.
         """
+        
+        if assignment not in self.domain:
+            raise Exception("Attempted to assign variable to value not in domain")
         self.assignment = assignment
     
     def unassign(self):
@@ -208,3 +211,6 @@ class csp:
     
     def get_cons_with_var(self, var):
         return self.vars_to_cons[var].copy()
+    
+    def backtracking_search(self):
+        pass
