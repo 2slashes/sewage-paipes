@@ -1,25 +1,27 @@
 from typing import Optional, Callable
 
+PipeType = tuple[bool, bool, bool, bool]
+
 class DomainGenerator:
-    all_domain = [
-        [True, True, True, False],
-        [True, True, False, True],
-        [True, True, False, False],
-        [True, False, True, True],
-        [True, False, True, False],
-        [True, False, False, True],
-        [True, False, False, False],
-        [False, True, True, True],
-        [False, True, True, False],
-        [False, True, False, True],
-        [False, True, False, False],
-        [False, False, True, True],
-        [False, False, True, False],
-        [False, False, False, True],
+    all_domain: list[PipeType] = [
+        ( True, True, True, False ),
+        ( True, True, False, True ),
+        ( True, True, False, False ),
+        ( True, False, True, True ),
+        ( True, False, True, False ),
+        ( True, False, False, True ),
+        ( True, False, False, False ),
+        ( False, True, True, True ),
+        ( False, True, True, False ),
+        ( False, True, False, True ),
+        ( False, True, False, False ),
+        ( False, False, True, True ),
+        ( False, False, True, False ),
+        ( False, False, False, True ),
     ]
 
     @staticmethod
-    def generate_domain(top: bool, right: bool, bottom: bool, left: bool):
+    def generate_domain(top: bool, right: bool, bottom: bool, left: bool) -> list[PipeType]:
         """
         Generate a domain based on the four boolean flags:
         if i == 0: 0 is false (top)
@@ -52,7 +54,7 @@ class Variable:
     A class representing a variable for a pipe at each location in the CSP.
     """
 
-    def __init__(self, name: tuple, domain: list[list[bool]], assignment: Optional[list[bool]]=None):
+    def __init__(self, location: tuple, domain: list[PipeType], assignment: Optional[PipeType]=None):
         """
         Initialize a Variable with a name, domain, and an optional assignment.
         
@@ -60,7 +62,7 @@ class Variable:
         :param domain: A list of list of bool objects representing the domain of the variable.
         :param assignment: An optional list of bool representing the current assignment.
         """
-        self.name = name
+        self.name = location
         self.domain = domain
         self.active_domain = domain
         self.assignment = assignment
@@ -81,7 +83,7 @@ class Variable:
         """
         return self.assignment
     
-    def prune(self, to_remove: list[list[bool]]):
+    def prune(self, to_remove: list[PipeType]):
         """
         Prune the active domain by removing specified list of bool objects.
         
@@ -90,7 +92,7 @@ class Variable:
         for pipe in to_remove:
             self.active_domain.remove(pipe)
         
-    def assign(self, assignment: list[bool]):
+    def assign(self, assignment: PipeType):
         """
         Assign a list of bool to the variable.
         
@@ -117,7 +119,7 @@ class Constraint:
     """
     A class representing a constraint for a CSP.
     """
-    def __init__(self, name: str, sat: Callable[[list[Variable]], bool], scope: list[Variable]):
+    def __init__(self, name: str, sat: Callable[[list[PipeType]], bool], scope: list[Variable]):
         """
         Initialize a Constraint with a name, satisfaction function, and scope.
         

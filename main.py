@@ -11,6 +11,6 @@ for i in range(n):
         bottom = i == n - 1
         left = j == 0
         right = j == n - 1
-        var = Variable(name=(i, j), domain=DomainGenerator.generate_domain(top, right, bottom, left))
+        var = Variable(location=(i, j), domain=DomainGenerator.generate_domain(top, right, bottom, left))
         row.append(var)
     variables.append(row)
