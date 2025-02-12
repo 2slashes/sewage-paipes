@@ -1,4 +1,5 @@
 from csp import *
+from pipes_constraints import *
 
 n = 5
 variables: list[list[Variable]] = []
@@ -13,4 +14,3 @@ for i in range(n):
         var = Variable(name=(i, j), domain=DomainGenerator.generate_domain(top, right, bottom, left))
         row.append(var)
     variables.append(row)
-
