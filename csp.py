@@ -170,6 +170,41 @@ class csp:
     '''
     csp
     '''
-    def __init__(self, vars: list[Variable], cons: list[Constraint]):
-        self.vars = vars
+    def __init__(self, name: str, vars: list[Variable], cons: list[Constraint]):
+        self.name = name
+        self.vars: list[Variable] = []
         self.cons = cons
+        self.vars_to_cons: dict = {}
+
+        for var in vars:
+            self.add_var(var)
+        
+        for con in cons:
+            self.add_con(con)
+
+
+    def add_var(self, var):
+        if type(var) is not Variable:
+            raise Exception("Tried to add a non-variable object as a variable in", self.name)
+        if var not in self.vars:
+            self.vars.append(var)
+            self.vars.vars_to_cons[var] = []
+    
+    def add_con(self, con):
+        if type(con) is not Constraint:
+            raise Exception("Tried to add a non-constraint object as a constraint in", self.name)
+        if con not in self.cons:
+            for var in con.scope:
+                if var not in self.vars_to_cons:
+                    raise Exception("Trying to add constraint with unknown variable to", self.name)
+                self.vars_to_cons[var].append(con)
+            self.cons.append(con)
+
+    def get_cons(self):
+        return self.cons.copy()
+    
+    def get_vars(self):
+        return self.vars.copy()
+    
+    def get_cons_with_var(self, var):
+        return self.vars_to_cons[var].copy()
