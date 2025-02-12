@@ -1,6 +1,6 @@
 from csp import *
 
-def has_connection(vars: list[Variable]):
+def has_connection(vars: list[Variable]) -> bool:
     '''
     main: the pipe that is being checked to see if there is a connection
     vars[0]: pipe above
