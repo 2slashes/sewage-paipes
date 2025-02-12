@@ -59,7 +59,7 @@ class Variable:
 
     def __init__(
         self,
-        location: tuple,
+        location: tuple[int, int],
         domain: list[PipeType],
         assignment: Optional[PipeType] = None,
     ):
@@ -163,7 +163,7 @@ class Constraint:
 
         :return: True if all variables have non-empty active domains, False otherwise.
         """
-        for var in self.vars:
+        for var in self.scope:
             if not len(var.active_domain):
                 return False
         return True

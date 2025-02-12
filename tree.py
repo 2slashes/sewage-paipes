@@ -8,12 +8,14 @@ Assignment = list[Optional[PipeType]]
 
 
 class Node:
-    def __init__(self, location: int):
+    def __init__(self, location: int) -> None:
         self.location = location
         self.children: list[Node] = []
 
-    def __eq__(self, other):
-        return self.location == other.value
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Node):
+            return self.location == other.location
+        return False
 
     def __hash__(self):
         return hash(self.location)
