@@ -193,8 +193,9 @@ class csp:
     def __init__(self, name: str, vars: list[Variable], cons: list[Constraint]):
         self.name = name
         self.vars: list[Variable] = []
-        self.cons = cons
-        self.vars_to_cons: dict = {}
+        self.cons: list[Constraint] = cons
+        self.vars_to_cons: dict[Variable, list[Constraint]] = {}
+        self.unassigned_vars: list[Variable] = []
 
         for var in vars:
             self.add_var(var)
@@ -202,16 +203,18 @@ class csp:
         for con in cons:
             self.add_con(con)
 
-    def add_var(self, var):
+    def add_var(self, var: Variable):
         if type(var) is not Variable:
             raise Exception(
                 "Tried to add a non-variable object as a variable in", self.name
             )
         if var not in self.vars:
             self.vars.append(var)
-            self.vars.vars_to_cons[var] = []
+            self.vars_to_cons[var] = []
+            if var.assignment is not None:
+                self.unassigned_vars.append(var)
 
-    def add_con(self, con):
+    def add_con(self, con: Constraint):
         if type(con) is not Constraint:
             raise Exception(
                 "Tried to add a non-constraint object as a constraint in", self.name
@@ -231,7 +234,7 @@ class csp:
     def get_vars(self):
         return self.vars.copy()
 
-    def get_cons_with_var(self, var):
+    def get_cons_with_var(self, var: Variable):
         return self.vars_to_cons[var].copy()
 
     def backtracking_search(self):

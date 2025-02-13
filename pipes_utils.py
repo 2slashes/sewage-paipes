@@ -28,7 +28,7 @@ def find_adj(center: int, n: int) -> tuple[int, int, int, int]:
 
 
 def check_connections(
-    main: PipeType,
+    center: PipeType,
     adj: tuple[
         Optional[PipeType], Optional[PipeType], Optional[PipeType], Optional[PipeType]
     ],
@@ -39,10 +39,11 @@ def check_connections(
     :return connections: a tuple holding the connection directions from the main variable, following the same direction format as the adj parameter
     """
     connections: list[bool] = [False] * 4
-    for i in range(len(main)):
+    for i in range(len(center)):
         # iterate through the surrounding pipes
-        if main[i]:
+        if center[i]:
             adj_pipe = adj[i]
+            # check if the current adjacent pipe has an opening facing towards the center pipe
             if adj_pipe is not None and adj_pipe[(i + 2) % 4]:
                 connections[i] = True
 
