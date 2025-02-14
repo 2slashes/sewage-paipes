@@ -148,7 +148,7 @@ class Constraint:
         self,
         name: str,
         validator: Callable[[list[PipeType]], bool],
-        pruner: Callable[[list[Variable]], None],
+        pruner: Callable[[list[Variable]], dict[Variable, list[PipeType]]],
         scope: list[Variable],
     ):
         """
@@ -156,7 +156,7 @@ class Constraint:
 
         :param name: A string representing the name of the constraint.
         :param validator: A callable function that takes a list of PipeTypes and returns a list of active domains for each variable in scope
-        :param pruner: A callable function that takes a list of assigned or unassigned variables and prunes their active domains
+        :param pruner: A callable function that takes a list of assigned or unassigned variables and prunes their active domains, returns {var -> pruned_domains}
         :param scope: A list of Variable objects representing the scope of the constraint.
         """
         self.name = name
@@ -227,11 +227,13 @@ class Constraint:
             pipes.append(var_assignment)
         return not self._validator(pipes)
 
-    def prune(self):
+    def prune(self) -> dict[Variable, list[PipeType]]:
         """
         Prune the active domains of the variables in the constraint's scope.
+
+        :returns: Active domains of the variables in the constraint's scope before pruning
         """
-        self._pruner(self.scope)
+        return self._pruner(self.scope)
 
 
 class CSP:
@@ -358,11 +360,19 @@ class CSP:
         # try every active assignment for the variable
         for assignment in curr_var.active_domain:
             self.assign_var(curr_var, assignment)
+            pruned_domains: dict[Variable, list[PipeType]] = {}
 
             # check if the assignment leads to a dead end (i.e. any variable having no active domains)
             no_active_domains = False
             for con in self.get_cons_with_var(curr_var):
-                con.prune()
+                # prune and accumulate pruned domains
+                pruned = con.prune()
+                for var in pruned:
+                    if var in pruned_domains:
+                        pruned_domains[var] += pruned[var]
+                    else:
+                        pruned_domains[var] = pruned[var]
+
                 if not con.var_has_active_domains():
                     no_active_domains = True
                     break
@@ -370,6 +380,10 @@ class CSP:
             # the variables will stay assigned after returning
             if not no_active_domains and self.forward_checking():
                 return True
+
+            # dead-end (no active domains for some variable) reached, restore the active domains
+            for var in pruned_domains:
+                var.active_domain += pruned_domains[var]
 
         # if the code gets here, then none of the assignable values for the variable work.
         # unassign the variable and return false to indicate that the csp is unsolvable
