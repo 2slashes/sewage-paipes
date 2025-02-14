@@ -148,7 +148,7 @@ class Constraint:
         self,
         name: str,
         validator: Callable[[list[PipeType]], bool],
-        pruner: Callable[[list[Variable]], list[list[PipeType]]],
+        pruner: Callable[[list[Variable]], None],
         scope: list[Variable],
     ):
         """
@@ -156,7 +156,7 @@ class Constraint:
 
         :param name: A string representing the name of the constraint.
         :param validator: A callable function that takes a list of PipeTypes and returns a list of active domains for each variable in scope
-        :param pruner: A callable function that takes a fully or partially assignment of PipeTypes in its scope and outputs the pruned domains of the scoped variables
+        :param pruner: A callable function that takes a list of assigned or unassigned variables and prunes their active domains
         :param scope: A list of Variable objects representing the scope of the constraint.
         """
         self.name = name
@@ -231,9 +231,7 @@ class Constraint:
         """
         Prune the active domains of the variables in the constraint's scope.
         """
-        new_active_domains = self._pruner(self.scope)
-        for i in range(len(self.scope)):
-            self.scope[i].active_domain = new_active_domains[i]
+        self._pruner(self.scope)
 
 
 class CSP:
