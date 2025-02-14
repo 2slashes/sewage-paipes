@@ -147,20 +147,19 @@ class Constraint:
     def __init__(
         self,
         name: str,
-        check_tuple: Callable[[list[PipeType]], bool],
+        validator: Callable[[list[PipeType]], bool],
         scope: list[Variable],
     ):
         """
         Initialize a Constraint with a name, satisfaction function, and scope.
 
         :param name: A string representing the name of the constraint.
-        :param sat: A callable function that takes a list of Variables and returns a boolean indicating if the constraint is satisfied.
+        :param validator: A callable function that takes a list of Variables and returns a boolean indicating if the constraint is satisfied.
         :param scope: A list of Variable objects representing the scope of the constraint.
         """
         self.name = name
-        self.check_tuple = check_tuple
+        self._validator = validator
         self.scope = scope
-        self.check_tuple = check_tuple
 
     def get_scope(self):
         """
@@ -170,7 +169,7 @@ class Constraint:
         """
         return list(self.scope)
 
-    def check_domains(self):
+    def var_has_active_domains(self):
         """
         Check if all variables in the scope have non-empty active domains.
 
@@ -207,6 +206,23 @@ class Constraint:
             if var.get_assignment() is None:
                 return False
         return True
+
+    def violated(self):
+        """
+        Check if the constraint is violated.
+
+        :returns: True if the constraint is violated, False if not.
+        """
+        if not self.check_fully_assigned():
+            raise Exception(
+                "Tried to check if a constraint was violated with unassigned variables"
+            )
+        pipes: list[PipeType] = []
+        for var in self.scope:
+            var_assignment = var.get_assignment()
+            assert var_assignment is not None
+            pipes.append(var_assignment)
+        return not self._validator(pipes)
 
 
 class csp:
@@ -296,33 +312,25 @@ class csp:
         if not self.unassigned_vars:
             return True
         # get an unassigned variable to assign next
-        to_assign = self.unassigned_vars[0]
+        curr_var = self.unassigned_vars[0]
         # try every assignment for the variable
-        for to_assign_assignment in to_assign.active_domain:
-            to_assign.assign(to_assign_assignment)
+        for assignment in curr_var.active_domain:
+            self.assign_var(curr_var, assignment)
+
             # check if the assignment violates any constraint
-            violation = False
-            for con in self.cons:
-                # if a constraint is not fully assigned, move to the next constraint
+            violated = False
+            for con in self.get_cons_with_var(curr_var):
                 if not con.check_fully_assigned():
                     continue
-
-                pipes: list[PipeType] = []
-                # check if all the variables in the constraint have been assigned
-                for var in con.get_scope():
-                    var_assignment = var.get_assignment()
-                    assert var_assignment is not None
-                    pipes.append(var_assignment)
-                # if a constraint is violated, the assignment doesn't work
-                if not con.check_tuple(pipes):
-                    violation = True
+                if con.violated():
+                    violated = True
                     break
             # this assignment will give a full solution once everything else is assigned
             # the variables will stay assigned after returning
-            if not violation and self.backtracking_search():
+            if not violated and self.backtracking_search():
                 return True
 
         # if the code gets here, then none of the assignable values for the variable work.
         # unassign the variable and return false to indicate that the csp is unsolvable
-        self.unassign_var(to_assign)
+        self.unassign_var(curr_var)
         return False
