@@ -148,7 +148,6 @@ class Constraint:
         self,
         name: str,
         check_tuple: Callable[[list[PipeType]], bool],
-
         scope: list[Variable],
     ):
         """
@@ -199,11 +198,11 @@ class Constraint:
         self.scope.remove(var)
 
     def check_fully_assigned(self):
-        '''
+        """
         check if all the variables in the constraint have been assigned
 
         :returns: True if all variables in the constraint's scope have been assigned, false if there are some variables that are unassigned
-        '''
+        """
         for var in self.scope:
             if var.get_assignment() is None:
                 return False
@@ -261,39 +260,38 @@ class csp:
 
     def get_cons_with_var(self, var: Variable):
         return self.vars_to_cons[var].copy()
-    
+
     def assign_var(self, var: Variable, assignment: PipeType) -> bool:
-        '''
+        """
         Assign a value to a specified variable
 
         :param var: Variable that gets assigned to a value
         :param assignment: PipeType value to assign to the variable
         :returns: True if assignment successful, False if not
-        '''
+        """
         if var.assign(assignment):
             self.unassigned_vars.remove(var)
             return True
         return False
-    
+
     def unassign_var(self, var: Variable) -> bool:
-        '''
+        """
         Unassign a value from a variable
 
         :param var: Variable to remove the assignment from
         :returns: True if value was removed, False if there was no value to remove
-        '''
+        """
         if var.unassign():
             self.unassigned_vars.append(var)
             return True
         return False
 
-
     def backtracking_search(self) -> bool:
-        '''
+        """
         Solves the csp using recursive backtracking search. Solution will be stored in the variable objects related to this csp.
 
         :returns: True if a solution was found, false if not.
-        '''
+        """
         # if there are no unassigned variables in the csp, then this is a solution
         if not self.unassigned_vars:
             return True
@@ -306,7 +304,8 @@ class csp:
             violation = False
             for con in self.cons:
                 # if a constraint is not fully assigned, move to the next constraint
-                if not con.check_fully_assigned(): continue
+                if not con.check_fully_assigned():
+                    continue
 
                 pipes: list[PipeType] = []
                 # check if all the variables in the constraint have been assigned
@@ -320,9 +319,9 @@ class csp:
                     break
             # this assignment will give a full solution once everything else is assigned
             # the variables will stay assigned after returning
-            if not violation and self.backtracking_search(): return True
-                
-                
+            if not violation and self.backtracking_search():
+                return True
+
         # if the code gets here, then none of the assignable values for the variable work.
         # unassign the variable and return false to indicate that the csp is unsolvable
         self.unassign_var(to_assign)
