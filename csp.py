@@ -77,11 +77,11 @@ class Variable:
         if assignment is not None:
             self.assign(assignment)
 
-    def get_domain(self):
+    def get_active_domain(self):
         """
         Get the domain of the variable.
 
-        :return: A list of PipeType objects representing the domain.
+        :return: A list of PipeType objects representing the active domain.
         """
         return list(self.domain)
 

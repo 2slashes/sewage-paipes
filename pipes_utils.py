@@ -35,7 +35,7 @@ def check_connections(
     ],
 ) -> tuple[bool, bool, bool, bool]:
     """
-    :param main: the "center" pipe
+    :param center: the "center" pipe
     :param adj: holds pipes adjacent to the main variable, with adj[0] is above main, and going clockwise from there
     :return connections: a tuple holding the connection directions from the main variable, following the same direction format as the adj parameter
     """
