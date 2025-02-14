@@ -62,8 +62,15 @@ class Node:
 
 
 def recurse_generate_graph_from_pipetypes_false_if_cycle(
-    parent: Node, assignment: Assignment, prev: Optional[Node] = None
+    parent: Node,
+    assignment: Assignment,
+    prev: Optional[Node] = None,
+    visited: set[Node] = set(),
 ) -> Union[Node, Literal[False]]:
+    if parent in visited:
+        return False
+    # row = parent.location // int(sqrt(len(assignment)))
+    # col = parent.location % int(sqrt(len(assignment)))
 
     (top, right, bottom, left) = find_adj(parent.location, int(sqrt(len(assignment))))
     center_pipe = assignment[parent.location]
@@ -83,41 +90,41 @@ def recurse_generate_graph_from_pipetypes_false_if_cycle(
         top_pipe_node = Node(top)
         if top_pipe_node != prev:
             parent.children.append(top_pipe_node)
-            recurse_generate_graph_from_pipetypes_false_if_cycle(
-                top_pipe_node, assignment, parent
+            result = recurse_generate_graph_from_pipetypes_false_if_cycle(
+                top_pipe_node, assignment, parent, visited | {parent}
             )
-    if parent.has_cycle():
-        return False
+            if result == False:
+                return False
 
     if right_connect:
         right_pipe_node = Node(right)
         if right_pipe_node != prev:
             parent.children.append(right_pipe_node)
-            recurse_generate_graph_from_pipetypes_false_if_cycle(
-                right_pipe_node, assignment, parent
+            result = recurse_generate_graph_from_pipetypes_false_if_cycle(
+                right_pipe_node, assignment, parent, visited | {parent}
             )
-    if parent.has_cycle():
-        return False
+            if result == False:
+                return False
 
     if bottom_connect:
         bottom_pipe_node = Node(bottom)
         if bottom_pipe_node != prev:
             parent.children.append(bottom_pipe_node)
-            recurse_generate_graph_from_pipetypes_false_if_cycle(
-                bottom_pipe_node, assignment, parent
+            result = recurse_generate_graph_from_pipetypes_false_if_cycle(
+                bottom_pipe_node, assignment, parent, visited | {parent}
             )
-    if parent.has_cycle():
-        return False
+            if result == False:
+                return False
 
     if left_connect:
         left_pipe_node = Node(left)
         if left_pipe_node != prev:
             parent.children.append(left_pipe_node)
-            recurse_generate_graph_from_pipetypes_false_if_cycle(
-                left_pipe_node, assignment, parent
+            result = recurse_generate_graph_from_pipetypes_false_if_cycle(
+                left_pipe_node, assignment, parent, visited | {parent}
             )
-    if parent.has_cycle():
-        return False
+            if result == False:
+                return False
 
     return parent
 

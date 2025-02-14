@@ -96,14 +96,15 @@ noLoopGrid2: list[list[Optional[PipeType]]] = [
     ],
 ]
 
-print("Loop Grid 1")
-print2DGrid(loopGrid1)
+if __name__ == "__main__":
+    print("Loop Grid 1")
+    print2DGrid(loopGrid1)
 
-print("Loop Grid 2")
-print2DGrid(loopGrid2)
+    print("Loop Grid 2")
+    print2DGrid(loopGrid2)
 
-print("No Loop Grid 1")
-print2DGrid(noLoopGrid1)
+    print("No Loop Grid 1")
+    print2DGrid(noLoopGrid1)
 
-print("No Loop Grid 2")
-print2DGrid(noLoopGrid2)
+    print("No Loop Grid 2")
+    print2DGrid(noLoopGrid2)

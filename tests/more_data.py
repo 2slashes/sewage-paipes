@@ -46,15 +46,16 @@ sampleGrid6NoLoopsFullyFilled: list[list[Optional[PipeType]]] = [
     [PIPE["UpRight"], PIPE["RightLeft"], PIPE["UpLeft"]],
 ]
 
-print("Sample Grid 1:")
-print2DGrid(sampleGrid1WithLoopsPartiallyFilled)
-print("\nSample Grid 2:")
-print2DGrid(sampleGrid2WithLoopsPartiallyFilled)
-print("\nSample Grid 3:")
-print2DGrid(sampleGrid3WithLoopsCompletelyFilled)
-print("\nSample Grid 4:")
-print2DGrid(sampleGrid4NoLoopsPartiallyFilled)
-print("\nSample Grid 5:")
-print2DGrid(sampleGrid5NoLoopsPartiallyFilled)
-print("\nSample Grid 6:")
-print2DGrid(sampleGrid6NoLoopsFullyFilled)
+if __name__ == "__main__":
+    print("Sample Grid 1:")
+    print2DGrid(sampleGrid1WithLoopsPartiallyFilled)
+    print("\nSample Grid 2:")
+    print2DGrid(sampleGrid2WithLoopsPartiallyFilled)
+    print("\nSample Grid 3:")
+    print2DGrid(sampleGrid3WithLoopsCompletelyFilled)
+    print("\nSample Grid 4:")
+    print2DGrid(sampleGrid4NoLoopsPartiallyFilled)
+    print("\nSample Grid 5:")
+    print2DGrid(sampleGrid5NoLoopsPartiallyFilled)
+    print("\nSample Grid 6:")
+    print2DGrid(sampleGrid6NoLoopsFullyFilled)

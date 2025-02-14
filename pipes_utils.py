@@ -1,3 +1,4 @@
+import math
 from csp import *
 
 
@@ -18,7 +19,7 @@ def find_adj(center: int, n: int) -> tuple[int, int, int, int]:
     if right % n == 0:
         right = -1
 
-    if below > (n * n):
+    if below >= (n * n):
         below = -1
 
     if left % n == n - 1:
@@ -53,3 +54,18 @@ def check_connections(
     connected_left = connections[3]
 
     return (connected_up, connected_right, connected_down, connected_left)
+
+
+def flatten(pipes: list[list[Optional[PipeType]]]) -> list[Optional[PipeType]]:
+    return [pipe for row in pipes for pipe in row]
+
+
+def gridify(pipes: list[Optional[PipeType]]) -> list[list[Optional[PipeType]]]:
+    n = math.sqrt(len(pipes))
+    if n % 1 != 0:
+        raise ValueError("The length of the list must be a perfect square")
+    n = int(n)
+    twoDGrid: list[list[Optional[PipeType]]] = []
+    for i in range(0, len(pipes), n):
+        twoDGrid.append(pipes[i : i + n])
+    return twoDGrid

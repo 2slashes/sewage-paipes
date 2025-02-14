@@ -1,4 +1,4 @@
-import math
+from pipes_utils import gridify
 from typing import Literal, Optional
 from csp import PipeType
 
@@ -66,10 +66,4 @@ def print2DGrid(pipes: list[list[Optional[PipeType]]]) -> None:
 
 
 def print1DGrid(pipes: list[Optional[PipeType]]) -> None:
-    n = math.sqrt(len(pipes))
-    if n % 1 != 0:
-        raise ValueError("The length of the list must be a perfect square")
-    n = int(n)
-    twoDGrid: list[list[Optional[PipeType]]] = []
-    for i in range(0, len(pipes), n):
-        twoDGrid.append(pipes[i : i + n])
+    print2DGrid(gridify(pipes))
