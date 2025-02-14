@@ -1,5 +1,6 @@
 from typing import Literal, Optional, Union
-from csp import PipeType
+
+from csp import PipeType, Variable
 from math import sqrt
 
 from pipes_utils import check_connections, find_adj
@@ -30,35 +31,6 @@ class Node:
             visited.add(current)
             stack.extend(current.children)
         return False
-
-
-# def generate_graph_from_pipetypes(assignment: Assignment) -> Node:
-#     pre_root = Node((float("inf"), float("inf")))
-
-#     root = Node((0, 0))
-
-#     stack: list[tuple[Node, Node]] = [(pre_root, root)]
-#     while stack:
-#         (parent, curr) = stack.pop()
-#         parent_is_left = parent.location[1] == curr.location[1] - 1
-#         parent_is_top = parent.location[0] == curr.location[0] - 1
-#         parent_is_right = parent.location[1] == curr.location[1] + 1
-#         parent_is_bottom = parent.location[0] == curr.location[0] + 1
-
-#         parent.children.append(curr)
-#         (has_top, has_right, has_bottom, has_left) = find_connection(
-#             assignment, curr.location
-#         )
-#         if has_top and not parent_is_top:
-#             stack.append((curr, Node((curr.location[0] - 1, curr.location[1]))))
-#         if has_right and not parent_is_right:
-#             stack.append((curr, Node((curr.location[0], curr.location[1] + 1))))
-#         if has_bottom and not parent_is_bottom:
-#             stack.append((curr, Node((curr.location[0] + 1, curr.location[1]))))
-#         if has_left and not parent_is_left:
-#             stack.append((curr, Node((curr.location[0], curr.location[1] - 1))))
-
-#     return root
 
 
 def recurse_generate_graph_from_pipetypes_false_if_cycle(
@@ -129,8 +101,93 @@ def recurse_generate_graph_from_pipetypes_false_if_cycle(
     return parent
 
 
-def tree_sat(assignment: Assignment) -> bool:
+def validator(assignment: Assignment) -> bool:
     root = Node(0)
     return (
         recurse_generate_graph_from_pipetypes_false_if_cycle(root, assignment) != False
     )
+
+
+def get_duplicated_touched(
+    parent: Node,
+    assignment: Assignment,
+    prev: Optional[Node] = None,
+    touched: set[Node] = set(),
+) -> Optional[Node]:
+    """
+    Creates a tree from assignment, checks if any squares are touched twice.
+    A square is "touched" if a pipe's opening is pointing towards it.
+
+    :param parent: the current node
+    :param assignment: the assignment of the pipes
+    :param prev: the previous node
+    :param touched: the set of nodes that have been touched
+
+    :return: the node that has been touched twice
+    """
+    center_pipe = assignment[parent.location]
+    if center_pipe is None:
+        raise Exception("Traversed to an unassigned pipe")
+
+    adj_indexes = find_adj(parent.location, int(sqrt(len(assignment))))
+
+    for i, adj_i in enumerate(adj_indexes):
+        if center_pipe[i]:
+            if adj_i == -1:
+                raise Exception(
+                    f"Pipe pointing to edge of grid in the direction of {i}"
+                )
+
+            adj_node = Node(adj_i)
+            if adj_node in touched:
+                return adj_node
+
+            touched.add(adj_node)
+
+    top_pipe, right_pipe, bottom_pipe, left_pipe = [
+        assignment[i] if i != -1 else None for i in adj_indexes
+    ]
+    pipe_tuple = (top_pipe, right_pipe, bottom_pipe, left_pipe)
+
+    adj_connections = check_connections(center_pipe, pipe_tuple)
+
+    for adj_i, adj_is_connected in zip(adj_indexes, adj_connections):
+        if adj_is_connected:
+            next_node = Node(adj_i)
+            if next_node != prev:
+                parent.children.append(next_node)
+            duplicate_touch = get_duplicated_touched(
+                next_node, assignment, parent, touched
+            )
+            if duplicate_touch:
+                return duplicate_touch
+    return None
+
+
+def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
+    assignment: Assignment = [var.get_assignment() for var in variables]
+    if all(x is None for x in assignment):
+        return {}
+
+    # get index of first non-none value
+    seed_index = next((i for i, x in enumerate(assignment) if x is not None), -1)
+    root = Node(seed_index)
+    duplicate_touch = get_duplicated_touched(root, assignment)
+
+    if duplicate_touch is None:
+        return {}
+
+    variable_to_prune = next(
+        (
+            var
+            for var in variables
+            if var.location[0] * len(variables) + var.location[1]
+            == duplicate_touch.location
+        ),
+        variables[0],
+    )
+
+    pruned_values = {variable_to_prune: variable_to_prune.active_domain}
+    variable_to_prune.prune(variable_to_prune.active_domain)
+
+    return pruned_values

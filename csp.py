@@ -70,7 +70,7 @@ class Variable:
         :param domain: A list of PipeType objects representing the domain of the variable.
         :param assignment: An optional PipeType object representing the current assignment.
         """
-        self.name = location
+        self.location = location
         self.domain = domain
         self.active_domain = domain
         self.assignment: Optional[PipeType] = None
@@ -136,7 +136,7 @@ class Variable:
         :return: A string representing the variable.
         """
         ass = "Unassigned" if self.assignment is None else self.assignment
-        return f"Variable {self.name}: {ass} in {self.active_domain}"
+        return f"Variable {self.location}: {ass} in {self.active_domain}"
 
 
 class Constraint:
