@@ -148,17 +148,20 @@ class Constraint:
         self,
         name: str,
         validator: Callable[[list[PipeType]], bool],
+        pruner: Callable[[list[Optional[PipeType]]], list[list[PipeType]]],
         scope: list[Variable],
     ):
         """
         Initialize a Constraint with a name, satisfaction function, and scope.
 
         :param name: A string representing the name of the constraint.
-        :param validator: A callable function that takes a list of Variables and returns a boolean indicating if the constraint is satisfied.
+        :param validator: A callable function that takes a list of PipeTypes and returns a boolean indicating if the constraint is satisfied.
+        :param pruner: A callable function that takes a fully or partially assignment of PipeTypes in its scope and outputs the pruned domains of the scoped variables
         :param scope: A list of Variable objects representing the scope of the constraint.
         """
         self.name = name
         self._validator = validator
+        self._pruner = pruner
         self.scope = scope
 
     def get_scope(self):
@@ -224,8 +227,17 @@ class Constraint:
             pipes.append(var_assignment)
         return not self._validator(pipes)
 
+    def prune(self):
+        """
+        Prune the active domains of the variables in the constraint's scope.
+        """
+        pipes: list[Optional[PipeType]] = [var.get_assignment() for var in self.scope]
+        new_active_domains = self._pruner(pipes)
+        for i in range(len(self.scope)):
+            self.scope[i].active_domain = new_active_domains[i]
 
-class csp:
+
+class CSP:
     """
     csp
     """
@@ -302,6 +314,17 @@ class csp:
             return True
         return False
 
+    def no_active_domains(self) -> bool:
+        """
+        Check if all unassigned variables have an empty active domain
+
+        :returns: True if all unassigned variables have an empty active domain, False if there is at least one unassigned variable with a non-empty active domain
+        """
+        for var in self.unassigned_vars:
+            if len(var.active_domain):
+                return False
+        return True
+
     def backtracking_search(self) -> bool:
         """
         Solves the csp using recursive backtracking search. Solution will be stored in the variable objects related to this csp.
@@ -328,6 +351,38 @@ class csp:
             # this assignment will give a full solution once everything else is assigned
             # the variables will stay assigned after returning
             if not violated and self.backtracking_search():
+                return True
+
+        # if the code gets here, then none of the assignable values for the variable work.
+        # unassign the variable and return false to indicate that the csp is unsolvable
+        self.unassign_var(curr_var)
+        return False
+
+    def forward_checking(self) -> bool:
+        """
+        Solves the csp using forward checking. Solution will be stored in the variable objects related to this csp.
+
+        :returns: True if a solution was found, false if not.
+        """
+        # if there are no unassigned variables in the csp, then this is a solution
+        if not self.unassigned_vars:
+            return True
+        # get an unassigned variable to assign next
+        curr_var = self.unassigned_vars[0]
+        # try every active assignment for the variable
+        for assignment in curr_var.active_domain:
+            self.assign_var(curr_var, assignment)
+
+            # check if the assignment leads to a dead end (i.e. no variable has active domains)
+            no_active_domains = False
+            for con in self.get_cons_with_var(curr_var):
+                con.prune()
+                if self.no_active_domains():
+                    no_active_domains = True
+                    break
+            # this assignment will give a full solution once everything else is assigned
+            # the variables will stay assigned after returning
+            if not no_active_domains and self.forward_checking():
                 return True
 
         # if the code gets here, then none of the assignable values for the variable work.
