@@ -3,13 +3,7 @@ from pipes_utils import *
 
 
 def has_connection(
-    pipes: tuple[
-        Optional[PipeType],
-        Optional[PipeType],
-        Optional[PipeType],
-        Optional[PipeType],
-        PipeType,
-    ]
+    pipes: list[PipeType]
 ) -> bool:
     """
     checks if a pipe has at least one connection with another pipe
@@ -29,10 +23,7 @@ def has_connection(
 
 
 def not_blocked_h(
-    pipes: tuple[
-        PipeType,
-        PipeType
-    ]
+    pipes: list[PipeType]
 ) -> bool:
     """
     Ensures that two horizontally-adjacent pipes are not blocking each other
@@ -47,10 +38,7 @@ def not_blocked_h(
     return True
 
 def not_blocked_v(
-    pipes: tuple[
-        PipeType,
-        PipeType
-    ]
+    pipes: list[PipeType]
 ) -> bool:
     """
     Ensures that two vertically-adjacent pipes are not blocking each other
@@ -65,10 +53,7 @@ def not_blocked_v(
     return True
 
 def not_blocked_pruner_h(
-    pipes: tuple[
-        Variable,
-        Variable
-    ]
+    pipes: list[Variable]
 ) -> dict[Variable, list[PipeType]]:
     """
     prunes values from 2 variables that would result in one of the pipes being blocked by an exit of another pipe
@@ -76,45 +61,36 @@ def not_blocked_pruner_h(
     :params pipes: tuple of two pipes where pipes[0] is to the left of pipes[1]
     :returns: A list of the active domains of the pipes prior to pruning
     """
+    assert len(pipes) > 2
     left = pipes[0]
     right = pipes[1]
 
     left_assignment = left.get_assignment()
     right_assignment = right.get_assignment()
-    to_prune: dict[Variable, list[PipeType]] = {}
-    if left_assignment is not None:
-        if left_assignment[1]:
-            # there is a path to the right pipe, prune all the assignments for the right pipe where the pipe doesn't connect with the left
-            for pipe_type in right.get_active_domain():
-                if not pipe_type[3]:
-                    to_prune[right].append(pipe_type)
-        else:
-            # there is no path to the right pipe, prune all assignments for the right pipe where the pipe tries to connect with the left pipe
-            for pipe_type in right.get_active_domain():
-                if pipe_type[3]:
-                    to_prune[right].append(pipe_type)
 
-    elif right_assignment is not None:
-        if right_assignment[3]:
-            # there is a path to the left pipe, prune all the assignments for the left pipe where the pipe doesn't connect with the right
-            for pipe_type in left.active_domain:
-                if not pipe_type[1]:
-                    to_prune[left].append(pipe_type)
-        else:
-            # there is no path to the left pipe, prune all the assignments for the left pipe where it tries to connect with the right pipe
-            for pipe_type in left.get_active_domain():
-                if pipe_type[1]:
-                    to_prune[left].append(pipe_type)
+    to_prune: dict[Variable, list[PipeType]] = {}
+    if left_assignment is not None and right_assignment is None:
+        for pipe_type in right.get_active_domain():
+            # there is a path to the right pipe, prune all PipeTypes for the right pipe where the pipe doesn't connect with the left
+            # or
+            # there is no path to the right pipe, prune all PipeTypes for the right pipe where the pipe tries to connect with the left pipe
+            if left_assignment[1] != pipe_type[3]:
+                to_prune[right].append(pipe_type)
+
+    elif right_assignment is not None and left_assignment is None:
+        for pipe_type in left.get_active_domain():
+            # there is a path to the left pipe, prune all PipeTypes for the left pipe where the pipe doesn't connect with the right
+            # or
+            # there is no path to the left pipe, prune all PipeTypes for the left pipe where the pipe tries to connect with the right pipe
+            if right_assignment[3] != pipe_type[1]:
+                to_prune[left].append(pipe_type)
 
     # if there are no assignments for either pipe, nothing should be pruned.
     # if both pipes are assigned, don't prune
     return to_prune
 
 def not_blocked_pruner_v(
-    pipes: tuple[
-        Variable,
-        Variable
-    ]
+    pipes: list[Variable]
 ) -> dict[Variable, list[PipeType]]:
     """
     prunes values from 2 variables that would result in one of the pipes being blocked by an exit of another pipe
@@ -157,18 +133,12 @@ def not_blocked_pruner_v(
     return to_prune
 
 def connectivity_pruner(
-    pipes: tuple[
-        Variable,
-        Variable,
-        Variable,
-        Variable,
-        Variable
-    ]
+    pipes: list[Variable]
 ) -> dict[Variable, list[PipeType]]:
     """
     prunes values from 5 variables for which assigning this value prevents a valid solution to the constraint
 
-    :params pipes: A tuple of 5 pipe variables, where the last one is the center pipe and the other four pipes are adjacent to the center, with the top one in index 0 and going clockwise from there.
+    :params pipes: A list of 5 pipe variables, where the last one is the center pipe and the other four pipes are adjacent to the center, with the top one in index 0 and going clockwise from there.
     :returns: a dict mapping variables to the values to remove from their active domain
     """
     center = pipes[4]

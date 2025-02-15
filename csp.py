@@ -433,7 +433,7 @@ class CSP:
 
     def ac3(self, q: list[Constraint]) -> dict[Variable, list[PipeType]]:
         pruned_domains: dict[Variable, list[PipeType]] = {}
-        while q:
+        while len(q):
             # get the variables pruned when checking for satisfying tuples with the first constraint
             cur_con: Constraint = q[0]
             pruned: dict[Variable, list[PipeType]] = cur_con.prune()
