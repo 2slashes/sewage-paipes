@@ -33,7 +33,7 @@ def assignment_has_cycle(
 
 
 def validator(assignment: Assignment) -> bool:
-    return assignment_has_cycle(0, assignment, set())
+    return not assignment_has_cycle(0, assignment, set())
 
 
 def get_duplicated_touched(
