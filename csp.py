@@ -185,21 +185,21 @@ class Constraint:
                 return False
         return True
 
-    def add_to_scope(self, var: Variable):
-        """
-        Add a variable to the scope of the constraint.
+    # def add_to_scope(self, var: Variable):
+    #     """
+    #     Add a variable to the scope of the constraint.
 
-        :param var: A Variable object to be added to the scope.
-        """
-        self.scope.append(var)
+    #     :param var: A Variable object to be added to the scope.
+    #     """
+    #     self.scope.append(var)
 
-    def remove_from_scope(self, var: Variable):
-        """
-        Remove a variable from the scope of the constraint.
+    # def remove_from_scope(self, var: Variable):
+    #     """
+    #     Remove a variable from the scope of the constraint.
 
-        :param var: A Variable object to be removed from the scope.
-        """
-        self.scope.remove(var)
+    #     :param var: A Variable object to be removed from the scope.
+    #     """
+    #     self.scope.remove(var)
 
     def check_fully_assigned(self):
         """
@@ -429,13 +429,15 @@ class CSP:
         curr_var = self.unassigned_vars[0]
         # try every active assignment for the variable
         for assignment in curr_var.active_domain:
+            print(f"assigning value {assignment} to variable {curr_var}")
+            self.unassign_var(curr_var)
             self.assign_var(curr_var, assignment)
             pruned_domains: dict[Variable, list[PipeType]] = {}
 
             # check if the assignment leads to a dead end (i.e. any variable having no active domains)
             no_active_domains = False
             pruned_domains = self.ac3(self.get_cons_with_var(curr_var))
-            for var in self.vars:
+            for var in pruned_domains:
                 if not var.get_active_domain():
                     no_active_domains = True
                     break
@@ -460,14 +462,15 @@ class CSP:
             cur_con: Constraint = q.pop(0)
             pruned: dict[Variable, list[PipeType]] = cur_con.prune()
             for var in pruned:
-                cons_to_add = self.get_cons_with_var(var)
-                for c in cons_to_add:
-                    if c not in q:
-                        q.append(c)
-            for var in pruned:
                 if var in pruned_domains:
                     pruned_domains[var] += pruned[var]
                 else:
                     pruned_domains[var] = pruned[var]
-
+                if not len(var.get_active_domain()):
+                    # the active domain of a variable is empty, no need to bother computing any more for this assignment
+                    return pruned_domains
+                cons_to_add = self.get_cons_with_var(var)
+                for c in cons_to_add:
+                    if c not in q:
+                        q.append(c)
         return pruned_domains
