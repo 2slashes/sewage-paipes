@@ -1,8 +1,10 @@
-from csp import PipeType
+from csp import DomainGenerator, PipeType
 from typing import Optional
 from visualizer import print2DGrid, PIPE
+from csp import Variable
+from pipes_utils import flatten
 
-loopGrid1: list[list[Optional[PipeType]]] = [
+almostLoopGrid1: list[list[Optional[PipeType]]] = [
     # Row 0
     [PIPE["RightDown"], PIPE["DownLeft"], None, None, None],
     # Row 1
@@ -15,7 +17,7 @@ loopGrid1: list[list[Optional[PipeType]]] = [
     ],
     # Row 2
     [
-        PIPE["UpDown"],
+        None,
         PIPE["RightDown"],
         PIPE["UpLeft"],
         None,
@@ -95,10 +97,27 @@ noLoopGrid2: list[list[Optional[PipeType]]] = [
         PIPE["UpLeft"],
     ],
 ]
+flattenedLoopGrid1 = flatten(almostLoopGrid1)
+# create a list of variables
+loopGrid1Variables: list[Variable] = []
+for i in range(len(flattenedLoopGrid1)):
+    top = i < 5
+    bottom = i >= 15
+    left = i % 5 == 0
+    right = i % 5 == 4
+    var = Variable(
+        location=(i // 5, i % 5),
+        domain=DomainGenerator.generate_domain(top, right, bottom, left),
+    )
+    if flattenedLoopGrid1[i] is not None:
+        pipe = flattenedLoopGrid1[i]
+        assert pipe is not None
+        var.assign(pipe)
+    loopGrid1Variables.append(var)
 
 if __name__ == "__main__":
     print("Loop Grid 1")
-    print2DGrid(loopGrid1)
+    print2DGrid(almostLoopGrid1)
 
     print("Loop Grid 2")
     print2DGrid(loopGrid2)

@@ -139,9 +139,8 @@ def get_duplicated_touched(
                 )
 
             adj_node = Node(adj_i)
-            if adj_node in touched:
+            if adj_node != prev and adj_node in touched:
                 return adj_node
-
             touched.add(adj_node)
 
     top_pipe, right_pipe, bottom_pipe, left_pipe = [
@@ -156,11 +155,11 @@ def get_duplicated_touched(
             next_node = Node(adj_i)
             if next_node != prev:
                 parent.children.append(next_node)
-            duplicate_touch = get_duplicated_touched(
-                next_node, assignment, parent, touched
-            )
-            if duplicate_touch:
-                return duplicate_touch
+                duplicate_touch = get_duplicated_touched(
+                    next_node, assignment, parent, touched
+                )
+                if duplicate_touch:
+                    return duplicate_touch
     return None
 
 
@@ -177,17 +176,15 @@ def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
     if duplicate_touch is None:
         return {}
 
+    n = int(sqrt(len(assignment)))
+    x = duplicate_touch.location // n
+    y = duplicate_touch.location % n
+
     variable_to_prune = next(
-        (
-            var
-            for var in variables
-            if var.location[0] * len(variables) + var.location[1]
-            == duplicate_touch.location
-        ),
-        variables[0],
+        (var for var in variables if var.location[0] == x and var.location[1] == y),
     )
 
-    pruned_values = {variable_to_prune: variable_to_prune.active_domain}
-    variable_to_prune.prune(variable_to_prune.active_domain)
+    pruned_values = {variable_to_prune: variable_to_prune.active_domain.copy()}
+    variable_to_prune.active_domain.clear()
 
     return pruned_values

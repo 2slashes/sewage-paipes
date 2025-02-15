@@ -72,7 +72,7 @@ class Variable:
         """
         self.location = location
         self.domain = domain
-        self.active_domain = domain
+        self.active_domain = domain.copy()
         self.assignment: Optional[PipeType] = None
         if assignment is not None:
             self.assign(assignment)
