@@ -236,7 +236,7 @@ class Constraint:
         :returns: Active domains of the variables in the constraint's scope before pruning
         """
         return self._pruner(self.scope)
-    
+
     def __repr__(self):
         return self.name
 
@@ -255,7 +255,7 @@ class CSP:
 
         for var in vars:
             self.add_var(var)
-        
+
         for con in cons:
             self.add_con(con)
 
@@ -275,7 +275,7 @@ class CSP:
             raise Exception(
                 "Tried to add a non-constraint object as a constraint in", self.name
             )
-            
+
         if con not in self.cons:
             for var in con.scope:
                 if var not in self.vars_to_cons:
@@ -319,6 +319,23 @@ class CSP:
             return True
         return False
 
+    def get_assignment(self) -> Assignment:
+        """
+        Get the current assignment of the variables in the csp.
+
+        :returns: A list of PipeType objects representing the assignment of the variables.
+        """
+        assignment: Assignment = []
+        for var in self.vars:
+            value = var.get_assignment()
+            if value is None:
+                raise Exception(
+                    "Tried to get assignment when some variables are unassigned"
+                )
+            assignment.append(value)
+
+        return assignment
+
     def backtracking_search(self) -> bool:
         """
         Solves the csp using recursive backtracking search. Solution will be stored in the variable objects related to this csp.
@@ -352,29 +369,28 @@ class CSP:
         self.unassign_var(curr_var)
         return False
 
-    def forward_checking(self) -> bool:
+    def forward_checking(self, solutions: list[Assignment]) -> None:
         """
         Solves the csp using forward checking. Solution will be stored in the variable objects related to this csp.
 
         :returns: True if a solution was found, false if not.
         """
         # if there are no unassigned variables in the csp, then this is a solution
-        
         if not self.unassigned_vars:
-            return True
+            solutions.append(self.get_assignment())
+            return
+
         # get an unassigned variable to assign next
         curr_var = self.unassigned_vars[0]
         # try every active assignment for the variable
         for assignment in curr_var.active_domain:
             self.unassign_var(curr_var)
             self.assign_var(curr_var, assignment)
-            # print(f"trying to assign value {assignment} to variable {curr_var}")
-            pruned_domains: dict[Variable, list[PipeType]] = {}
 
-            # check if the assignment leads to a dead end (i.e. any variable having no active domains)
+            # prune values and accumulate pruned values
+            pruned_domains: dict[Variable, list[PipeType]] = {}
             no_active_domains = False
             for con in self.get_cons_with_var(curr_var):
-                # prune and accumulate pruned domains
                 pruned = con.prune()
                 for var in pruned:
                     if var in pruned_domains:
@@ -385,19 +401,14 @@ class CSP:
                 if not con.var_has_active_domains():
                     no_active_domains = True
                     break
-            # this assignment will give a full solution once everything else is assigned
-            # the variables will stay assigned after returning
-            if not no_active_domains and self.forward_checking():
-                return True
 
-            # dead-end (no active domains for some variable) reached, restore the active domains
+            # no dead-ends, keep going, adding to solutions if everything is assigned
+            if not no_active_domains:
+                self.forward_checking(solutions)
+
+            # restore the active domains and try another variable
             for var in pruned_domains:
                 var.active_domain += pruned_domains[var]
-
-        # if the code gets here, then none of the assignable values for the variable work.
-        # unassign the variable and return false to indicate that the csp is unsolvable
-        self.unassign_var(curr_var)
-        return False
 
     def gac(self) -> bool:
         """

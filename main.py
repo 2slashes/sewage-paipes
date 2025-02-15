@@ -1,6 +1,7 @@
 from csp import *
 from pipes_constraints import *
 from pipes_utils import *
+from test_data.loop_grids import print1DGrid
 from tree import validator as tree_validator, pruner as tree_pruner
 
 n = 5
@@ -119,4 +120,11 @@ all_cons = connectivity_cons + no_blocking_cons + [tree_con]
 
 # create csp
 csp = CSP("Sewage pAIpes", variables, all_cons)
-print(csp.forward_checking())
+solutions: list[Assignment] = []
+csp.forward_checking(solutions)
+
+for solution in solutions:
+    print1DGrid(solution)  # type: ignore
+    print()
+
+print(f"{len(solutions)} solutions found")
