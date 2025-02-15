@@ -1,7 +1,7 @@
 from csp import *
 from pipes_constraints import *
 from pipes_utils import *
-from tree import *
+from tree import validator as tree_validator, pruner as tree_pruner
 
 n = 5
 variables: list[Variable] = []
@@ -34,7 +34,9 @@ for i in range(len(variables)):
             adj_variables.append(variables[adj[dir]])
     con_vars: list[Variable] = adj_variables + [variables[adj[i]]]
     name = f"connectivity {i}"
-    connectivity_cons.append(Constraint(name, has_connection, connectivity_pruner, con_vars))
+    connectivity_cons.append(
+        Constraint(name, has_connection, connectivity_pruner, con_vars)
+    )
 
 # create binary constraints for no blocking
 no_blocking_cons: list[Constraint] = []
@@ -50,23 +52,27 @@ for i in range(n):
         right = variables[i * n + j + 1]
         scope = [left, right]
         name = f"no blocking horizontal {i * n + j, i * n + j + 1}"
-        no_blocking_h.append(Constraint(name, not_blocked_h, not_blocked_pruner_h, scope))
+        no_blocking_h.append(
+            Constraint(name, not_blocked_h, not_blocked_pruner_h, scope)
+        )
 
 # vertical cons
 no_blocking_v: list[Constraint] = []
-for i in range(n-1):
+for i in range(n - 1):
     for j in range(n):
         above = variables[i * n + j]
         below = variables[(i + 1) * n + j]
         scope = [above, below]
         name = f"no blocking vertical {i * n + j, (i + 1) * n + j}"
-        no_blocking_v.append(Constraint(name, not_blocked_v, not_blocked_pruner_v, scope))
+        no_blocking_v.append(
+            Constraint(name, not_blocked_v, not_blocked_pruner_v, scope)
+        )
 
 # add cons
 no_blocking_cons += no_blocking_h + no_blocking_v
 
 # create tree constraint
-tree_con: Constraint = Constraint("tree", validator, pruner, variables)
+tree_con: Constraint = Constraint("tree", tree_validator, tree_pruner, variables)
 all_cons = connectivity_cons + no_blocking_cons + [tree_con]
 
 # create csp

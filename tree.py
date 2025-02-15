@@ -5,7 +5,8 @@ from math import sqrt
 
 from pipes_utils import check_connections, find_adj
 
-Assignment = list[Optional[PipeType]]
+PartialAssignment = list[Optional[PipeType]]
+Assignment = list[PipeType]
 
 
 class Node:
@@ -46,8 +47,6 @@ def recurse_generate_graph_from_pipetypes_false_if_cycle(
 
     (top, right, bottom, left) = find_adj(parent.location, int(sqrt(len(assignment))))
     center_pipe = assignment[parent.location]
-    if center_pipe is None:
-        raise Exception("Center pipe is None")
 
     top_pipe = assignment[top] if top != -1 else None
     right_pipe = assignment[right] if right != -1 else None
@@ -110,7 +109,7 @@ def validator(assignment: Assignment) -> bool:
 
 def get_duplicated_touched(
     parent: Node,
-    assignment: Assignment,
+    assignment: PartialAssignment,
     prev: Optional[Node] = None,
     touched: set[Node] = set(),
 ) -> Optional[Node]:
@@ -164,7 +163,7 @@ def get_duplicated_touched(
 
 
 def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
-    assignment: Assignment = [var.get_assignment() for var in variables]
+    assignment: PartialAssignment = [var.get_assignment() for var in variables]
     if all(x is None for x in assignment):
         return {}
 
