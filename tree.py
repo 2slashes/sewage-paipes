@@ -1,116 +1,47 @@
-from typing import Literal, Optional, Union
-
-from csp import PipeType, Variable
+from typing import Optional
+from csp import PipeType, Variable, PartialAssignment, Assignment
 from math import sqrt
-
 from pipes_utils import check_connections, find_adj
 
-PartialAssignment = list[Optional[PipeType]]
-Assignment = list[PipeType]
 
-
-class Node:
-    def __init__(self, location: int) -> None:
-        self.location = location
-        self.children: list[Node] = []
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, Node):
-            return self.location == other.location
-        return False
-
-    def __hash__(self):
-        return hash(self.location)
-
-    def has_cycle(self) -> bool:
-        visited: set[Node] = set()
-        stack: list[Node] = [self]
-        while stack:
-            current = stack.pop()
-            if current in visited:
-                return True
-            visited.add(current)
-            stack.extend(current.children)
-        return False
-
-
-def recurse_generate_graph_from_pipetypes_false_if_cycle(
-    parent: Node,
+def assignment_has_cycle(
+    curr: int,
     assignment: Assignment,
-    prev: Optional[Node] = None,
-    visited: set[Node] = set(),
-) -> Union[Node, Literal[False]]:
-    if parent in visited:
-        return False
+    prev: Optional[int] = None,
+    visited: set[int] = set(),
+) -> bool:
+    if curr in visited:
+        return True
+    visited.add(curr)
 
-    (top, right, bottom, left) = find_adj(parent.location, int(sqrt(len(assignment))))
-    center_pipe = assignment[parent.location]
+    adj_indexes = find_adj(curr, int(sqrt(len(assignment))))
 
-    top_pipe = assignment[top] if top != -1 else None
-    right_pipe = assignment[right] if right != -1 else None
-    bottom_pipe = assignment[bottom] if bottom != -1 else None
-    left_pipe = assignment[left] if left != -1 else None
+    center_pipe = assignment[curr]
+    top_pipe, right_pipe, bottom_pipe, left_pipe = [
+        assignment[i] if i != -1 else None for i in adj_indexes
+    ]
 
-    (top_connect, right_connect, bottom_connect, left_connect) = check_connections(
-        center_pipe, (top_pipe, right_pipe, bottom_pipe, left_pipe)
-    )
+    pipe_tuple = (top_pipe, right_pipe, bottom_pipe, left_pipe)
 
-    if top_connect:
-        top_pipe_node = Node(top)
-        if top_pipe_node != prev:
-            parent.children.append(top_pipe_node)
-            result = recurse_generate_graph_from_pipetypes_false_if_cycle(
-                top_pipe_node, assignment, parent, visited | {parent}
-            )
-            if result == False:
-                return False
+    adj_connections = check_connections(center_pipe, pipe_tuple)
 
-    if right_connect:
-        right_pipe_node = Node(right)
-        if right_pipe_node != prev:
-            parent.children.append(right_pipe_node)
-            result = recurse_generate_graph_from_pipetypes_false_if_cycle(
-                right_pipe_node, assignment, parent, visited | {parent}
-            )
-            if result == False:
-                return False
-
-    if bottom_connect:
-        bottom_pipe_node = Node(bottom)
-        if bottom_pipe_node != prev:
-            parent.children.append(bottom_pipe_node)
-            result = recurse_generate_graph_from_pipetypes_false_if_cycle(
-                bottom_pipe_node, assignment, parent, visited | {parent}
-            )
-            if result == False:
-                return False
-
-    if left_connect:
-        left_pipe_node = Node(left)
-        if left_pipe_node != prev:
-            parent.children.append(left_pipe_node)
-            result = recurse_generate_graph_from_pipetypes_false_if_cycle(
-                left_pipe_node, assignment, parent, visited | {parent}
-            )
-            if result == False:
-                return False
-
-    return parent
+    for adj_i, adj_is_connected in zip(adj_indexes, adj_connections):
+        if adj_is_connected and adj_i != prev:
+            if assignment_has_cycle(adj_i, assignment, curr, visited):
+                return True
+    return False
 
 
 def validator(assignment: Assignment) -> bool:
-    root = Node(0)
-    return (
-        recurse_generate_graph_from_pipetypes_false_if_cycle(root, assignment) != False
-    )
+    return assignment_has_cycle(0, assignment)
 
 
 def get_duplicated_touched(
-    parent: Node,
+    curr: int,
     assignment: PartialAssignment,
-    prev: Optional[Node] = None,
-    touched: set[Node] = set(),
-) -> Optional[Node]:
+    prev: Optional[int] = None,
+    touched: set[int] = set(),
+) -> Optional[int]:
     """
     Creates a tree from assignment, checks if any squares are touched twice.
     A square is "touched" if a pipe's opening is pointing towards it.
@@ -122,11 +53,11 @@ def get_duplicated_touched(
 
     :return: the node that has been touched twice
     """
-    center_pipe = assignment[parent.location]
+    center_pipe = assignment[curr]
     if center_pipe is None:
         raise Exception("Traversed to an unassigned pipe")
 
-    adj_indexes = find_adj(parent.location, int(sqrt(len(assignment))))
+    adj_indexes = find_adj(curr, int(sqrt(len(assignment))))
 
     for i, adj_i in enumerate(adj_indexes):
         if center_pipe[i]:
@@ -135,10 +66,10 @@ def get_duplicated_touched(
                     f"Pipe pointing to edge of grid in the direction of {i}"
                 )
 
-            adj_node = Node(adj_i)
-            if adj_node != prev and adj_node in touched:
-                return adj_node
-            touched.add(adj_node)
+            if adj_i != prev and adj_i in touched:
+                return adj_i
+
+            touched.add(adj_i)
 
     top_pipe, right_pipe, bottom_pipe, left_pipe = [
         assignment[i] if i != -1 else None for i in adj_indexes
@@ -148,15 +79,10 @@ def get_duplicated_touched(
     adj_connections = check_connections(center_pipe, pipe_tuple)
 
     for adj_i, adj_is_connected in zip(adj_indexes, adj_connections):
-        if adj_is_connected:
-            next_node = Node(adj_i)
-            if next_node != prev:
-                parent.children.append(next_node)
-                duplicate_touch = get_duplicated_touched(
-                    next_node, assignment, parent, touched
-                )
-                if duplicate_touch:
-                    return duplicate_touch
+        if adj_is_connected and adj_i != prev:
+            duplicate_touch = get_duplicated_touched(adj_i, assignment, curr, touched)
+            if duplicate_touch:
+                return duplicate_touch
     return None
 
 
@@ -167,14 +93,13 @@ def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
 
     # get index of first non-none value
     seed_index = next((i for i, x in enumerate(assignment) if x is not None), -1)
-    root = Node(seed_index)
-    duplicate_touch = get_duplicated_touched(root, assignment)
+    duplicate_touch = get_duplicated_touched(seed_index, assignment)
 
     if duplicate_touch is None:
         return {}
 
     variable_to_prune = next(
-        (var for var in variables if var.location == duplicate_touch.location),
+        (var for var in variables if var.location == duplicate_touch),
     )
 
     pruned_values = {variable_to_prune: variable_to_prune.active_domain.copy()}

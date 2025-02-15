@@ -60,13 +60,14 @@ def partial_assignment_to_variables(
     n = len(partial_assignment)
     side_length = int(sqrt(n))
     for i in range(len(partial_assignment)):
-        top = i == 0
+        top = i in range(side_length)
         bottom = i in range(n - side_length, n)
         left = i % side_length == 0
         right = i % side_length == side_length - 1
         var = Variable(
             location=i,
             domain=DomainGenerator.generate_domain(top, right, bottom, left),
+            assignment=partial_assignment[i],
         )
         variables.append(var)
     return variables

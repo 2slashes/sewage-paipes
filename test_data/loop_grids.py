@@ -1,4 +1,5 @@
-from test_data_constructors import PIPE, print1DGrid
+# from test_data_constructors import PIPE, print1DGrid
+from test_data.test_data_constructors import PIPE, print1DGrid
 from pipes_utils import flatten
 
 almostLoopGrid1 = flatten(
