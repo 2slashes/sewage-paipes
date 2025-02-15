@@ -236,6 +236,9 @@ class Constraint:
         :returns: Active domains of the variables in the constraint's scope before pruning
         """
         return self._pruner(self.scope)
+    
+    def __repr__(self):
+        return self.name
 
 
 class CSP:
@@ -246,13 +249,13 @@ class CSP:
     def __init__(self, name: str, vars: list[Variable], cons: list[Constraint]):
         self.name = name
         self.vars: list[Variable] = []
-        self.cons: list[Constraint] = cons
+        self.cons: list[Constraint] = []
         self.vars_to_cons: dict[Variable, list[Constraint]] = {}
         self.unassigned_vars: list[Variable] = []
 
         for var in vars:
             self.add_var(var)
-
+        
         for con in cons:
             self.add_con(con)
 
@@ -264,7 +267,7 @@ class CSP:
         if var not in self.vars:
             self.vars.append(var)
             self.vars_to_cons[var] = []
-            if var.assignment is not None:
+            if var.assignment is None:
                 self.unassigned_vars.append(var)
 
     def add_con(self, con: Constraint):
@@ -272,6 +275,7 @@ class CSP:
             raise Exception(
                 "Tried to add a non-constraint object as a constraint in", self.name
             )
+            
         if con not in self.cons:
             for var in con.scope:
                 if var not in self.vars_to_cons:
@@ -355,13 +359,16 @@ class CSP:
         :returns: True if a solution was found, false if not.
         """
         # if there are no unassigned variables in the csp, then this is a solution
+        
         if not self.unassigned_vars:
             return True
         # get an unassigned variable to assign next
         curr_var = self.unassigned_vars[0]
         # try every active assignment for the variable
         for assignment in curr_var.active_domain:
+            self.unassign_var(curr_var)
             self.assign_var(curr_var, assignment)
+            # print(f"trying to assign value {assignment} to variable {curr_var}")
             pruned_domains: dict[Variable, list[PipeType]] = {}
 
             # check if the assignment leads to a dead end (i.e. any variable having no active domains)
@@ -437,7 +444,7 @@ class CSP:
         pruned_domains: dict[Variable, list[PipeType]] = {}
         while len(q):
             # get the variables pruned when checking for satisfying tuples with the first constraint
-            cur_con: Constraint = q[0]
+            cur_con: Constraint = q.pop(0)
             pruned: dict[Variable, list[PipeType]] = cur_con.prune()
             for var in pruned:
                 cons_to_add = self.get_cons_with_var(var)

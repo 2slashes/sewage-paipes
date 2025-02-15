@@ -15,7 +15,7 @@ for i in range(n):
         left = j == 0
         right = j == n - 1
         var = Variable(
-            location=(i, j),
+            location=i * n + j,
             domain=DomainGenerator.generate_domain(top, right, bottom, left),
         )
         row.append(var)
@@ -32,11 +32,53 @@ for i in range(len(variables)):
     for dir in range(4):
         if adj[dir] != -1:
             adj_variables.append(variables[adj[dir]])
-    con_vars: list[Variable] = adj_variables + [variables[adj[i]]]
+    con_vars: list[Variable] = adj_variables + [variables[i]]
     name = f"connectivity {i}"
-    connectivity_cons.append(
-        Constraint(name, has_connection, connectivity_pruner, con_vars)
-    )
+    if i == 0:
+        # top left corner
+        connectivity_cons.append(
+            Constraint(name, has_connection, connectivity_pruner_top_left, con_vars)
+        )
+    elif i == n - 1:
+        # top right corner
+        connectivity_cons.append(
+            Constraint(name, has_connection, connectivity_pruner_top_right, con_vars)
+        )
+    elif i == n * (n - 1):
+        # bottom left corner
+        connectivity_cons.append(
+            Constraint(name, has_connection, connectivity_pruner_bottom_left, con_vars)
+        )
+    elif i == n * n - 1:
+        # bottom right corner
+        connectivity_cons.append(
+            Constraint(name, has_connection, connectivity_pruner_bottom_right, con_vars)
+        )
+    elif i < n - 1:
+        # top row
+        connectivity_cons.append(
+            Constraint(name, has_connection, connectivity_pruner_top, con_vars)
+        )
+    elif i % 5 == 0:
+        # left column
+        connectivity_cons.append(
+            Constraint(name, has_connection, connectivity_pruner_left, con_vars)
+        )
+    elif i % 5 == 4:
+        # right column
+        connectivity_cons.append(
+            Constraint(name, has_connection, connectivity_pruner_right, con_vars)
+        )
+    elif i > n * (n - 1):
+        # bottom row
+        connectivity_cons.append(
+            Constraint(name, has_connection, connectivity_pruner_bottom, con_vars)
+        )
+    else:
+        # middle
+        connectivity_cons.append(
+            Constraint(name, has_connection, connectivity_pruner_mid, con_vars)
+        )
 
 # create binary constraints for no blocking
 no_blocking_cons: list[Constraint] = []
@@ -77,3 +119,4 @@ all_cons = connectivity_cons + no_blocking_cons + [tree_con]
 
 # create csp
 csp = CSP("Sewage pAIpes", variables, all_cons)
+print(csp.forward_checking())
