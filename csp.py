@@ -389,3 +389,63 @@ class CSP:
         # unassign the variable and return false to indicate that the csp is unsolvable
         self.unassign_var(curr_var)
         return False
+
+    def gac(self) -> bool:
+        """
+        Solves the csp using generalized arc consistency. Solution will be stored in the variable objects related to this csp.
+
+        :returns: True if a solution was found, false if not.
+        """
+
+        """
+        every time a value is removed from the domain of a variable X, recheck all the variables that share a constraint with X
+        """
+        # all variables in the csp have been assigned
+        if not self.unassigned_vars:
+            return True
+        # get an unassigned variable to assign next
+        curr_var = self.unassigned_vars[0]
+        # try every active assignment for the variable
+        for assignment in curr_var.active_domain:
+            self.assign_var(curr_var, assignment)
+            pruned_domains: dict[Variable, list[PipeType]] = {}
+
+            # check if the assignment leads to a dead end (i.e. any variable having no active domains)
+            no_active_domains = False
+            pruned_domains = self.ac3(self.get_cons_with_var(curr_var))
+            for var in self.vars:
+                if not var.get_active_domain():
+                    no_active_domains = True
+                    break
+            # this assignment will give a full solution once everything else is assigned
+            # the variables will stay assigned after returning
+            if not no_active_domains and self.gac():
+                return True
+
+            # dead-end (no active domains for some variable) reached, restore the active domains
+            for var in pruned_domains:
+                var.active_domain += pruned_domains[var]
+
+        # if the code gets here, then none of the assignable values for the variable work.
+        # unassign the variable and return false to indicate that the csp is unsolvable
+        self.unassign_var(curr_var)
+        return False
+
+    def ac3(self, q: list[Constraint]) -> dict[Variable, list[PipeType]]:
+        pruned_domains: dict[Variable, list[PipeType]] = {}
+        while q:
+            # get the variables pruned when checking for satisfying tuples with the first constraint
+            cur_con: Constraint = q[0]
+            pruned: dict[Variable, list[PipeType]] = cur_con.prune()
+            for var in pruned:
+                cons_to_add = self.get_cons_with_var(var)
+                for c in cons_to_add:
+                    if c not in q:
+                        q.append(c)
+            for var in pruned:
+                if var in pruned_domains:
+                    pruned_domains[var] += pruned[var]
+                else:
+                    pruned_domains[var] = pruned[var]
+
+        return pruned_domains
