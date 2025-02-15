@@ -74,7 +74,8 @@ def not_blocked_pruner_h(
             # there is no path to the right pipe, prune all PipeTypes for the right pipe where the pipe tries to connect with the left pipe
             if left_assignment[1] != pipe_type[3]:
                 if right in to_prune:
-                    to_prune[right].append(pipe_type)
+                    if pipe_type not in to_prune[right]:
+                        to_prune[right].append(pipe_type)
                 else:
                     to_prune[right] = [pipe_type]
 
@@ -85,12 +86,16 @@ def not_blocked_pruner_h(
             # there is no path to the left pipe, prune all PipeTypes for the left pipe where the pipe tries to connect with the right pipe
             if right_assignment[3] != pipe_type[1]:
                 if left in to_prune:
-                    to_prune[left].append(pipe_type)
+                    if pipe_type not in to_prune[left]:
+                        to_prune[left].append(pipe_type)
                 else:
                     to_prune[left] = [pipe_type]
 
     # if there are no assignments for either pipe, nothing should be pruned.
     # if both pipes are assigned, don't prune
+    for var in to_prune:
+        print(var)
+        var.prune(to_prune[var])
     return to_prune
 
 def not_blocked_pruner_v(
@@ -150,7 +155,8 @@ def not_blocked_pruner_v(
             # there is no path to the bottom pipe, prune all PipeTypes for the bottom pipe where the pipe tries to connect with the top pipe
             if top_assignment[2] != pipe_type[0]:
                 if bottom in to_prune:
-                    to_prune[bottom].append(pipe_type)
+                    if pipe_type not in to_prune[bottom]:
+                        to_prune[bottom].append(pipe_type)
                 else:
                     to_prune[bottom] = [pipe_type]
 
@@ -161,12 +167,15 @@ def not_blocked_pruner_v(
             # there is no path to the top pipe, prune all PipeTypes for the top pipe where the pipe tries to connect with the bottom pipe
             if bottom_assignment[0] != pipe_type[2]:
                 if top in to_prune:
-                    to_prune[top].append(pipe_type)
+                    if pipe_type not in to_prune[top]:
+                        to_prune[top].append(pipe_type)
                 else:
                     to_prune[top] = [pipe_type]
                     
     # if there are no assignments for either pipe, nothing should be pruned.
     # if both pipes are assigned, don't prune
+    for var in to_prune:
+        var.prune(to_prune[var])
     return to_prune
 
 def connectivity_pruner_mid(
@@ -247,6 +256,8 @@ def connectivity_pruner_mid(
                         else:
                             to_prune[adj[dir]] = [pipe_type]
         # if more than one edge is unassigned, nothing can be said about what should be removed from the active domain of the edges.
+    for var in to_prune:
+        var.prune(to_prune[var])
     return to_prune
 
 def connectivity_pruner_top(
@@ -328,6 +339,8 @@ def connectivity_pruner_top(
                         else:
                             to_prune[adj[dir]] = [pipe_type]
         # if more than one edge is unassigned, nothing can be said about what should be removed from the active domain of the edges.
+    for var in to_prune:
+        var.prune(to_prune[var])
     return to_prune
 
 def connectivity_pruner_right(
@@ -409,6 +422,8 @@ def connectivity_pruner_right(
                         else:
                             to_prune[adj[dir]] = [pipe_type]
         # if more than one edge is unassigned, nothing can be said about what should be removed from the active domain of the edges.
+    for var in to_prune:
+        var.prune(to_prune[var])
     return to_prune
 
 def connectivity_pruner_bottom(
@@ -490,6 +505,8 @@ def connectivity_pruner_bottom(
                         else:
                             to_prune[adj[dir]] = [pipe_type]
         # if more than one edge is unassigned, nothing can be said about what should be removed from the active domain of the edges.
+    for var in to_prune:
+        var.prune(to_prune[var])
     return to_prune
 
 def connectivity_pruner_left(
@@ -571,6 +588,8 @@ def connectivity_pruner_left(
                         else:
                             to_prune[adj[dir]] = [pipe_type]
         # if more than one edge is unassigned, nothing can be said about what should be removed from the active domain of the edges.
+    for var in to_prune:
+        var.prune(to_prune[var])
     return to_prune
 
 def connectivity_pruner_top_right(
@@ -652,6 +671,8 @@ def connectivity_pruner_top_right(
                         else:
                             to_prune[adj[dir]] = [pipe_type]
         # if more than one edge is unassigned, nothing can be said about what should be removed from the active domain of the edges.
+    for var in to_prune:
+        var.prune(to_prune[var])
     return to_prune
 
 def connectivity_pruner_bottom_right(
@@ -733,6 +754,8 @@ def connectivity_pruner_bottom_right(
                         else:
                             to_prune[adj[dir]] = [pipe_type]
         # if more than one edge is unassigned, nothing can be said about what should be removed from the active domain of the edges.
+    for var in to_prune:
+        var.prune(to_prune[var])
     return to_prune
 
 def connectivity_pruner_bottom_left(
@@ -814,6 +837,8 @@ def connectivity_pruner_bottom_left(
                         else:
                             to_prune[adj[dir]] = [pipe_type]
         # if more than one edge is unassigned, nothing can be said about what should be removed from the active domain of the edges.
+    for var in to_prune:
+        var.prune(to_prune[var])
     return to_prune
 
 def connectivity_pruner_top_left(
@@ -896,4 +921,6 @@ def connectivity_pruner_top_left(
                         else:
                             to_prune[adj[dir]] = [pipe_type]
         # if more than one edge is unassigned, nothing can be said about what should be removed from the active domain of the edges.
+    for var in to_prune:
+        var.prune(to_prune[var])
     return to_prune

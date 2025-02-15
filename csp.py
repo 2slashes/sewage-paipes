@@ -85,7 +85,7 @@ class Variable:
 
         :return: A list of PipeType objects representing the active domain.
         """
-        return list(self.domain)
+        return list(self.active_domain)
 
     def get_assignment(self) -> PipeType | None:
         """
