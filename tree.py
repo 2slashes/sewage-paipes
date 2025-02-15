@@ -42,8 +42,6 @@ def recurse_generate_graph_from_pipetypes_false_if_cycle(
 ) -> Union[Node, Literal[False]]:
     if parent in visited:
         return False
-    # row = parent.location // int(sqrt(len(assignment)))
-    # col = parent.location % int(sqrt(len(assignment)))
 
     (top, right, bottom, left) = find_adj(parent.location, int(sqrt(len(assignment))))
     center_pipe = assignment[parent.location]
@@ -175,12 +173,8 @@ def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
     if duplicate_touch is None:
         return {}
 
-    n = int(sqrt(len(assignment)))
-    x = duplicate_touch.location // n
-    y = duplicate_touch.location % n
-
     variable_to_prune = next(
-        (var for var in variables if var.location[0] == x and var.location[1] == y),
+        (var for var in variables if var.location == duplicate_touch.location),
     )
 
     pruned_values = {variable_to_prune: variable_to_prune.active_domain.copy()}

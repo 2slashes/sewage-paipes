@@ -56,7 +56,7 @@ def check_connections(
     return (connected_up, connected_right, connected_down, connected_left)
 
 
-def flatten(pipes: list[list[Optional[PipeType]]]) -> list[Optional[PipeType]]:
+def flatten(pipes: list[list[Optional[PipeType]]]) -> PartialAssignment:
     return [pipe for row in pipes for pipe in row]
 
 

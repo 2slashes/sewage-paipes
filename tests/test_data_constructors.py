@@ -1,6 +1,7 @@
+from math import sqrt
 from pipes_utils import gridify
 from typing import Literal, Optional
-from csp import PipeType
+from csp import DomainGenerator, PartialAssignment, PipeType, Variable
 
 PIPE_CHAR: dict[PipeType, str] = {
     (True, False, False, False): "╵",  # Open at the top
@@ -50,6 +51,25 @@ PIPE: dict[PipeName, PipeType] = {
     "UpDownLeft": (True, False, True, True),
     "RightDownLeft": (False, True, True, True),
 }
+
+
+def partial_assignment_to_variables(
+    partial_assignment: PartialAssignment,
+) -> list[Variable]:
+    variables: list[Variable] = []
+    n = len(partial_assignment)
+    side_length = int(sqrt(n))
+    for i in range(len(partial_assignment)):
+        top = i == 0
+        bottom = i in range(n - side_length, n)
+        left = i % side_length == 0
+        right = i % side_length == side_length - 1
+        var = Variable(
+            location=i,
+            domain=DomainGenerator.generate_domain(top, right, bottom, left),
+        )
+        variables.append(var)
+    return variables
 
 
 def print2DGrid(pipes: list[list[Optional[PipeType]]]) -> None:

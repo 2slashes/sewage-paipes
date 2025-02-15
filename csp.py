@@ -1,6 +1,8 @@
 from typing import Optional, Callable
 
 PipeType = tuple[bool, bool, bool, bool]
+Assignment = list[PipeType]
+PartialAssignment = list[Optional[PipeType]]
 
 
 class DomainGenerator:
@@ -43,10 +45,10 @@ class DomainGenerator:
         domain = DomainGenerator.all_domain.copy()
         if top:
             domain = [pipe for pipe in domain if not pipe[0]]
-        elif right:
-            domain = [pipe for pipe in domain if not pipe[1]]
-        if bottom:
+        elif bottom:
             domain = [pipe for pipe in domain if not pipe[2]]
+        if right:
+            domain = [pipe for pipe in domain if not pipe[1]]
         elif left:
             domain = [pipe for pipe in domain if not pipe[3]]
         return domain
@@ -59,7 +61,7 @@ class Variable:
 
     def __init__(
         self,
-        location: tuple[int, int],
+        location: int,
         domain: list[PipeType],
         assignment: Optional[PipeType] = None,
     ):
