@@ -375,9 +375,11 @@ class CSP:
 
         :returns: True if a solution was found, false if not.
         """
-        # if there are no unassigned variables in the csp, then this is a solution
+        # if there are no unassigned variables in the csp and it's not already in solutions, then this is a new solution
         if not self.unassigned_vars:
-            solutions.append(self.get_assignment())
+            curr_assignment = self.get_assignment()
+            if curr_assignment not in solutions:
+                solutions.append(curr_assignment)
             return
 
         # get an unassigned variable to assign next
