@@ -94,7 +94,6 @@ def not_blocked_pruner_h(
     # if there are no assignments for either pipe, nothing should be pruned.
     # if both pipes are assigned, don't prune
     for var in to_prune:
-        print(var)
         var.prune(to_prune[var])
     return to_prune
 
