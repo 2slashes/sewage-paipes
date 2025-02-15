@@ -56,14 +56,14 @@ loopGrid2 = flatten(
     ]
 )
 
-noLoopGrid1 = flatten(
+almostLoopGrid2 = flatten(
     [
         # Row 0
         [PIPE["RightDown"], None, None, None, None],
         # Row 1
-        [PIPE["UpDown"], None, None, None, None],
+        [PIPE["UpDown"], None, PIPE["RightDown"], PIPE["DownLeft"], None],
         # Row 2
-        [PIPE["UpDown"], None, None, None, None],
+        [PIPE["UpDown"], None, PIPE["UpRight"], None, None],
         # Row 3
         [PIPE["UpDown"], None, None, None, None],
         # Row 4
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     print1DGrid(loopGrid2)
 
     print("No Loop Grid 1")
-    print1DGrid(noLoopGrid1)
+    print1DGrid(almostLoopGrid2)
 
     print("No Loop Grid 2")
     print1DGrid(noLoopGrid2)

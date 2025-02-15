@@ -39,6 +39,7 @@ def validator(assignment: Assignment) -> bool:
 def get_duplicated_touched(
     curr: int,
     assignment: PartialAssignment,
+    visited: set[int],
     touched: set[int],
     prev: Optional[int] = None,
 ) -> Optional[int]:
@@ -46,13 +47,14 @@ def get_duplicated_touched(
     Creates a tree from assignment, checks if any squares are touched twice.
     A square is "touched" if a pipe's opening is pointing towards it.
 
-    :param parent: the current node
-    :param assignment: the assignment of the pipes
-    :param prev: the previous node
-    :param touched: the set of nodes that have been touched
+    :param curr: the current square index
+    :param assignment: the assignment
+    :param touched: the set of touched squares indices
+    :param prev: the previous square index
 
-    :return: the node that has been touched twice
+    :return: index of the square touched twice, or None if no square is touched twice
     """
+    visited.add(curr)
     center_pipe = assignment[curr]
     if center_pipe is None:
         raise Exception("Traversed to an unassigned pipe")
@@ -80,7 +82,13 @@ def get_duplicated_touched(
 
     for adj_i, adj_is_connected in zip(adj_indexes, adj_connections):
         if adj_is_connected and adj_i != prev:
-            duplicate_touch = get_duplicated_touched(adj_i, assignment, touched, curr)
+            duplicate_touch = get_duplicated_touched(
+                curr=adj_i,
+                assignment=assignment,
+                touched=touched,
+                visited=visited,
+                prev=curr,
+            )
             if duplicate_touch:
                 return duplicate_touch
     return None
@@ -88,21 +96,26 @@ def get_duplicated_touched(
 
 def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
     assignment: PartialAssignment = [var.get_assignment() for var in variables]
-    if all(x is None for x in assignment):
-        return {}
 
-    # get index of first non-none value
-    seed_index = next((i for i, x in enumerate(assignment) if x is not None), -1)
-    duplicate_touch = get_duplicated_touched(seed_index, assignment, set())
+    visited: set[int] = set()
+    for assignment_index, assignment_value in enumerate(assignment):
+        if assignment_value != None and not assignment_index in visited:
+            duplicate_touch_index = get_duplicated_touched(
+                curr=assignment_index,
+                assignment=assignment,
+                visited=visited,
+                touched=set(),
+            )
 
-    if duplicate_touch is None:
-        return {}
+            if duplicate_touch_index:
+                variable_to_prune = next(
+                    (var for var in variables if var.location == duplicate_touch_index),
+                )
 
-    variable_to_prune = next(
-        (var for var in variables if var.location == duplicate_touch),
-    )
+                pruned_values = {
+                    variable_to_prune: variable_to_prune.active_domain.copy()
+                }
+                variable_to_prune.active_domain.clear()
 
-    pruned_values = {variable_to_prune: variable_to_prune.active_domain.copy()}
-    variable_to_prune.active_domain.clear()
-
-    return pruned_values
+                return pruned_values
+    return {}
