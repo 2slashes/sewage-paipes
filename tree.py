@@ -7,8 +7,8 @@ from pipes_utils import check_connections, find_adj
 def assignment_has_cycle(
     curr: int,
     assignment: Assignment,
+    visited: set[int],
     prev: Optional[int] = None,
-    visited: set[int] = set(),
 ) -> bool:
     if curr in visited:
         return True
@@ -27,20 +27,20 @@ def assignment_has_cycle(
 
     for adj_i, adj_is_connected in zip(adj_indexes, adj_connections):
         if adj_is_connected and adj_i != prev:
-            if assignment_has_cycle(adj_i, assignment, curr, visited):
+            if assignment_has_cycle(adj_i, assignment, visited, curr):
                 return True
     return False
 
 
 def validator(assignment: Assignment) -> bool:
-    return assignment_has_cycle(0, assignment)
+    return assignment_has_cycle(0, assignment, set())
 
 
 def get_duplicated_touched(
     curr: int,
     assignment: PartialAssignment,
+    touched: set[int],
     prev: Optional[int] = None,
-    touched: set[int] = set(),
 ) -> Optional[int]:
     """
     Creates a tree from assignment, checks if any squares are touched twice.
@@ -80,7 +80,7 @@ def get_duplicated_touched(
 
     for adj_i, adj_is_connected in zip(adj_indexes, adj_connections):
         if adj_is_connected and adj_i != prev:
-            duplicate_touch = get_duplicated_touched(adj_i, assignment, curr, touched)
+            duplicate_touch = get_duplicated_touched(adj_i, assignment, touched, curr)
             if duplicate_touch:
                 return duplicate_touch
     return None
@@ -93,7 +93,7 @@ def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
 
     # get index of first non-none value
     seed_index = next((i for i, x in enumerate(assignment) if x is not None), -1)
-    duplicate_touch = get_duplicated_touched(seed_index, assignment)
+    duplicate_touch = get_duplicated_touched(seed_index, assignment, set())
 
     if duplicate_touch is None:
         return {}
