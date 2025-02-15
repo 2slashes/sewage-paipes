@@ -124,7 +124,15 @@ solutions: list[Assignment] = []
 csp.forward_checking(solutions)
 
 for solution in solutions:
-    print1DGrid(solution)  # type: ignore
+    constraints_violated: list[Constraint] = []
+    for con in all_cons:
+        if not con._validator(solution):  # type: ignore
+            constraints_violated.append(con)
+    if len(constraints_violated) > 0:
+        print1DGrid(solution)  # type: ignore
+        print("Constraints violated:")
+        for con in constraints_violated:
+            print(f"{con.name}: {con._validator(solution)}")  # type: ignore
     print()
 
 print(f"{len(solutions)} solutions found")
