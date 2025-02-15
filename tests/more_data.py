@@ -1,6 +1,6 @@
 from csp import PipeType
 from typing import Optional
-from visualizer import print2DGrid, PIPE
+from tests.test_data_constructors import print2DGrid, PIPE
 
 # 4×4 grid, partially filled
 sampleGrid1WithLoopsPartiallyFilled: list[list[Optional[PipeType]]] = [
