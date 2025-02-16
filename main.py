@@ -4,7 +4,7 @@ from pipes_utils import *
 from test_data.loop_grids import print1DGrid
 from tree import validator as tree_validator, pruner as tree_pruner
 
-n = 5
+n = 3
 variables: list[Variable] = []
 
 # initialize variable objects
@@ -125,14 +125,20 @@ csp.forward_checking(solutions)
 
 for solution in solutions:
     constraints_violated: list[Constraint] = []
+    sub_solution: list[PipeType] = []
     for con in all_cons:
-        if not con._validator(solution):  # type: ignore
+        scope_vals: list[int] = []
+        for var in con.get_scope():
+            scope_vals.append(var.location)
+        for i in scope_vals:
+            sub_solution.append(solution[i])
+        if not con._validator(sub_solution):  # type: ignore
             constraints_violated.append(con)
     if len(constraints_violated) > 0:
         print1DGrid(solution)  # type: ignore
         print("Constraints violated:")
         for con in constraints_violated:
-            print(f"{con.name}: {con._validator(solution)}")  # type: ignore
+            print(f"{con.name}: {con._validator(sub_solution)}")  # type: ignore
     print()
 
 print(f"{len(solutions)} solutions found")
