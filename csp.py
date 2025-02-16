@@ -4,7 +4,6 @@ PipeType = tuple[bool, bool, bool, bool]
 Assignment = list[PipeType]
 PartialAssignment = list[Optional[PipeType]]
 
-
 class DomainGenerator:
     all_domain: list[PipeType] = [
         (True, True, True, False),
@@ -379,6 +378,10 @@ class CSP:
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
             if curr_assignment not in solutions:
+                print(curr_assignment)
+                for con in self.cons:
+                    print(f"constraint {con.name} violated: {con.violated()}")
+                print()
                 solutions.append(curr_assignment)
             return
 
