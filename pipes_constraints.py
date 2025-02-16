@@ -515,7 +515,7 @@ def connectivity_pruner_bottom(
     :returns: a dict mapping variables to the values to remove from their active domain
     """
     center = pipes[3]
-    adj = pipes[:2] + [pipes[0]] + [pipes[3]]
+    adj = pipes[:2] + [pipes[0]] + [pipes[2]]
     
     center_val = center.get_assignment()
     # the bottom pipe is absent, so adj_vals[2] should not be a real assignment and should instead indicate that there is no variable here

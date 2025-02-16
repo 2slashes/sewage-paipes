@@ -121,24 +121,24 @@ all_cons = connectivity_cons + no_blocking_cons + [tree_con]
 # create csp
 csp = CSP("Sewage pAIpes", variables, all_cons)
 solutions: list[Assignment] = []
-csp.forward_checking(solutions)
+csp.gac_all(solutions)
 
-for solution in solutions:
-    constraints_violated: list[Constraint] = []
-    sub_solution: list[PipeType] = []
-    for con in all_cons:
-        scope_vals: list[int] = []
-        for var in con.get_scope():
-            scope_vals.append(var.location)
-        for i in scope_vals:
-            sub_solution.append(solution[i])
-        if not con._validator(sub_solution):  # type: ignore
-            constraints_violated.append(con)
-    if len(constraints_violated) > 0:
-        print1DGrid(solution)  # type: ignore
-        print("Constraints violated:")
-        for con in constraints_violated:
-            print(f"{con.name}: {con._validator(sub_solution)}")  # type: ignore
-    print()
+# for solution in solutions:
+#     constraints_violated: list[Constraint] = []
+#     sub_solution: list[PipeType] = []
+#     for con in all_cons:
+#         scope_vals: list[int] = []
+#         for var in con.get_scope():
+#             scope_vals.append(var.location)
+#         for i in scope_vals:
+#             sub_solution.append(solution[i])
+#         if not con._validator(sub_solution):  # type: ignore
+#             constraints_violated.append(con)
+#     if len(constraints_violated) > 0:
+#         print1DGrid(solution)  # type: ignore
+#         print("Constraints violated:")
+#         for con in constraints_violated:
+#             print(f"{con.name}: {con._validator(sub_solution)}")  # type: ignore
+#     print()
 
-print(f"{len(solutions)} solutions found")
+# print(f"{len(solutions)} solutions found")

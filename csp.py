@@ -1,4 +1,5 @@
-from typing import Optional, Callable
+from typing import Optional, Callable, Literal
+from math import sqrt
 
 PipeType = tuple[bool, bool, bool, bool]
 Assignment = list[PipeType]
@@ -378,7 +379,7 @@ class CSP:
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
             if curr_assignment not in solutions:
-                print(curr_assignment)
+                print1DGrid(curr_assignment) # type: ignore
                 for con in self.cons:
                     print(f"constraint {con.name} violated: {con.violated()}")
                 print()
@@ -477,3 +478,116 @@ class CSP:
                     if c not in q:
                         q.append(c)
         return pruned_domains
+    
+    def gac_all(self, solutions: list[Assignment]) -> None:
+        """
+        Solves the csp using generalized arc consistency. Solution will be stored in the variable objects related to this csp.
+
+        :returns: True if a solution was found, false if not.
+        """
+
+        """
+        every time a value is removed from the domain of a variable X, recheck all the variables that share a constraint with X
+        """
+        # all variables in the csp have been assigned
+        if not self.unassigned_vars:
+            curr_assignment = self.get_assignment()
+            if curr_assignment not in solutions:
+                print1DGrid(curr_assignment) # type: ignore
+                for con in self.cons:
+                    violated = con.violated()
+                    if violated:
+                        print(f"constraint {con.name} violated: {con.violated()}")
+                solutions.append(curr_assignment)
+                print(len(solutions))
+                print()
+            return
+        # get an unassigned variable to assign next
+        curr_var = self.unassigned_vars[0]
+        # try every active assignment for the variable
+        for assignment in curr_var.active_domain:
+            # print(f"assigning value {assignment} to variable {curr_var}")
+            self.unassign_var(curr_var)
+            self.assign_var(curr_var, assignment)
+            pruned_domains: dict[Variable, list[PipeType]] = {}
+
+            # check if the assignment leads to a dead end (i.e. any variable having no active domains)
+            no_active_domains = False
+            pruned_domains = self.ac3(self.get_cons_with_var(curr_var))
+            for var in pruned_domains:
+                if not var.get_active_domain():
+                    no_active_domains = True
+                    break
+            # this assignment will give a full solution once everything else is assigned
+            # the variables will stay assigned after returning
+            if not no_active_domains:
+                self.gac_all(solutions)
+
+            # dead-end (no active domains for some variable) reached, restore the active domains
+            for var in pruned_domains:
+                var.active_domain += pruned_domains[var]
+
+        # if the code gets here, then none of the assignable values for the variable work.
+        # unassign the variable and return false to indicate that the csp is unsolvable
+        self.unassign_var(curr_var)
+
+PIPE_CHAR: dict[PipeType, str] = {
+    (True, False, False, False): "╵",  # Open at the top
+    (False, True, False, False): "╶",  # Open at the right
+    (False, False, True, False): "╷",  # Open at the bottom
+    (False, False, False, True): "╴",  # Open at the left
+    (True, True, False, False): "└",  # Elbow (bottom-left)
+    (True, False, True, False): "│",  # Vertical pipe
+    (True, False, False, True): "┘",  # Elbow (bottom-right)
+    (False, True, True, False): "┌",  # Elbow (top-left)
+    (False, True, False, True): "─",  # Horizontal pipe
+    (False, False, True, True): "┐",  # Elbow (top-right)
+    (True, True, True, False): "├",  # T-junction (left, down, up)
+    (True, True, False, True): "┴",  # T-junction (left, right, down)
+    (True, False, True, True): "┤",  # T-junction (right, down, up)
+    (False, True, True, True): "┬",  # T-junction (left, right, up)
+}
+PipeName = Literal[
+    "Up",
+    "Right",
+    "Down",
+    "Left",
+    "UpRight",
+    "UpDown",
+    "UpLeft",
+    "RightDown",
+    "RightLeft",
+    "DownLeft",
+    "UpRightDown",
+    "UpRightLeft",
+    "UpDownLeft",
+    "RightDownLeft",
+]
+PIPE: dict[PipeName, PipeType] = {
+    "Up": (True, False, False, False),
+    "Right": (False, True, False, False),
+    "Down": (False, False, True, False),
+    "Left": (False, False, False, True),
+    "UpRight": (True, True, False, False),
+    "UpDown": (True, False, True, False),
+    "UpLeft": (True, False, False, True),
+    "RightDown": (False, True, True, False),
+    "RightLeft": (False, True, False, True),
+    "DownLeft": (False, False, True, True),
+    "UpRightDown": (True, True, True, False),
+    "UpRightLeft": (True, True, False, True),
+    "UpDownLeft": (True, False, True, True),
+    "RightDownLeft": (False, True, True, True),
+}
+
+
+def print1DGrid(pipes: list[Optional[PipeType]]) -> None:
+    n = int(sqrt(len(pipes)))
+    for i in range(len(pipes)):
+        pipe = pipes[i]
+        if pipe is None:
+            print("•", end="")
+        else:
+            print(PIPE_CHAR[pipe], end="")
+        if i % n == n - 1:
+            print()
