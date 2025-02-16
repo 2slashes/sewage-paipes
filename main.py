@@ -4,6 +4,7 @@ from pipes_constraints import *
 from pipes_utils import *
 from test_data.loop_grids import print1DGrid
 from tree import validator as tree_validator, pruner as tree_pruner
+from connected import validator as connected_validator
 
 
 n = 3
