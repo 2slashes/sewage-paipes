@@ -1,9 +1,7 @@
+from pipe_typings import *
 from typing import Optional, Callable, Literal
 from math import sqrt
-
-PipeType = tuple[bool, bool, bool, bool]
-Assignment = list[PipeType]
-PartialAssignment = list[Optional[PipeType]]
+from pipes_utils import *
 
 class DomainGenerator:
     all_domain: list[PipeType] = [
@@ -422,10 +420,6 @@ class CSP:
 
         :returns: True if a solution was found, false if not.
         """
-
-        """
-        every time a value is removed from the domain of a variable X, recheck all the variables that share a constraint with X
-        """
         # all variables in the csp have been assigned
         if not self.unassigned_vars:
             return True
@@ -481,13 +475,9 @@ class CSP:
     
     def gac_all(self, solutions: list[Assignment]) -> None:
         """
-        Solves the csp using generalized arc consistency. Solution will be stored in the variable objects related to this csp.
+        Finds all solutions to the csp using generalized arc consistency. Solutions will be stored in the solutions list that is passed in as a parameter.
 
-        :returns: True if a solution was found, false if not.
-        """
-
-        """
-        every time a value is removed from the domain of a variable X, recheck all the variables that share a constraint with X
+        :params solutions: a list where the solutions will be stored
         """
         # all variables in the csp have been assigned
         if not self.unassigned_vars:
@@ -498,6 +488,7 @@ class CSP:
                     violated = con.violated()
                     if violated:
                         print(f"constraint {con.name} violated: {con.violated()}")
+                        raise Exception("chyme")
                 solutions.append(curr_assignment)
                 print(len(solutions))
                 print()

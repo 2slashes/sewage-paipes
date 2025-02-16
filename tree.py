@@ -1,3 +1,4 @@
+from pipe_typings import *
 from typing import Optional
 from csp import PipeType, Variable, PartialAssignment, Assignment
 from math import sqrt

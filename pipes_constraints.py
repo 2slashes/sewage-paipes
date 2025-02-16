@@ -1,5 +1,7 @@
-from csp import *
+from pipe_typings import *
+from csp import Variable
 from pipes_utils import *
+from math import sqrt
 
 def has_connection_mid(
     pipes: list[PipeType]
@@ -131,6 +133,38 @@ def not_blocked_v(
         return False
     return True
 
+def not_disconnected(
+    pipes: list[PipeType]
+) -> bool:
+    """
+    Ensures that everything is connected
+    """
+    stack: list[tuple[PipeType, int]] = [(pipes[0], 0)]
+    visited: list[int] = []
+    while len(stack) > 0:
+        cur, loc = stack.pop()
+        visited.append(loc)
+        adj_vals: tuple[int, int, int, int] = find_adj(loc, int(sqrt(len(pipes))))
+        top_val: Optional[PipeType] = None
+        if adj_vals[0] != -1:
+            top_val = pipes[adj_vals[0]]
+        right_val: Optional[PipeType] = None
+        if adj_vals[1] != -1:
+            right_val = pipes[adj_vals[1]]
+        bottom_val: Optional[PipeType] = None
+        if adj_vals[2] != -1:
+            bottom_val = pipes[adj_vals[2]]
+        left_val: Optional[PipeType] = None
+        if adj_vals[3] != -1:
+            left_val = pipes[adj_vals[3]]
+        connections: tuple[bool, bool, bool, bool] = check_connections(cur, (top_val, right_val, bottom_val, left_val))
+        for i in range(4):
+            if connections[i] and adj_vals[i] not in visited:
+                stack.append((pipes[adj_vals[i]], adj_vals[i]))
+    if len(visited) == len(pipes):
+        return True
+    return False
+
 def not_blocked_pruner_h(
     pipes: list[Variable]
 ) -> dict[Variable, list[PipeType]]:
@@ -186,40 +220,6 @@ def not_blocked_pruner_v(
     :params pipes: tuple of two pipes where pipes[0] is above pipes[1]
     :returns: A dict mapping the variables to the values to remove from their active domain
     """
-    # above = pipes[0]
-    # below = pipes[1]
-
-    # top_assignment = above.get_assignment()
-    # bottom_assignment = below.get_assignment()
-    # to_prune: dict[Variable, list[PipeType]] = {}
-    # if top_assignment is not None:
-    #     if top_assignment[2]:
-    #         # there is a path to the bottom pipe, prune all the assignments for the bottom pipe where the pipe doesn't connect with the top
-    #         for pipe_type in below.get_active_domain():
-    #             if not pipe_type[0]:
-    #                 to_prune[below].append(pipe_type)
-    #     else:
-    #         # there is no path to the bottom pipe, prune all assignments for the bottom pipe where the pipe tries to connect with the top
-    #         for pipe_type in below.get_active_domain():
-    #             if pipe_type[0]:
-    #                 to_prune[below].append(pipe_type)
-
-    # elif bottom_assignment is not None:
-    #     if bottom_assignment[0]:
-    #         # there is a path to the top pipe, prune all the assignments for the top pipe where the pipe doesn't connect with the bottom
-    #         for pipe_type in above.active_domain:
-    #             if not pipe_type[2]:
-    #                 to_prune[above].append(pipe_type)
-    #     else:
-    #         # there is no path to the top pipe, prune all the assignments for the top pipe where it tries to connect with the bottom pipe
-    #         for pipe_type in above.get_active_domain():
-    #             if pipe_type[2]:
-    #                 to_prune[above].append(pipe_type)
-
-    # # if there are no assignments for either pipe, nothing should be pruned.
-    # # if both pipes are assigned, don't prune
-    # return to_prune
-
     top = pipes[0]
     bottom = pipes[1]
 
@@ -312,29 +312,35 @@ def connectivity_pruner_mid(
                     else:
                         to_prune[one_dir] = [pipe_type]
     else:
-        # if an edge is unassigned but the center is assigned, has no connection, and can only connect with this unassigned edge (i.e. there are no other unassigned edges), prune values from this edge that don't connect with the center
+        # if the center is assigned, only prune values if the center has no connections currently
         connections = check_connections(center_val, adj_vals)
         num_connections = sum(connections)
         if num_connections == 0:
-            # there are no connections
-            # check if there is one unassigned adjacent variable
-            num_unassigned = 0
-            dir = 0
-            for cur_adj_dir in range(4):
-                cur_adj_val = adj_vals[cur_adj_dir]
-                if cur_adj_val is None:
-                    num_unassigned += 1
-                    dir = cur_adj_dir
-            if num_unassigned == 1:
-                # there is one unassigned adjacent variable, and it is in direction dir
-                # prune all the values from this variable that don't connect with the center
-                for pipe_type in adj[dir].get_active_domain():
-                    if not pipe_type[(dir + 2) % 4]:
-                        if adj[dir] in to_prune:
-                            to_prune[adj[dir]].append(pipe_type)
+            # check how many unassigned adjacent variables the center pipe is pointing to
+            # if it's 0, prune every value from all unassigned adjacent pipes
+            # if it's 1, prune values from that adjacent pipe that don't connect with the center
+            # if it's more than 1, prune nothing
+            pointing_to_unassigned = 0
+            pointing_to_dir = 0
+            for dir in range(4):
+                if center_val[dir] and adj_vals[dir] is None:
+                    pointing_to_unassigned += 1
+                    pointing_to_dir = dir
+            if pointing_to_unassigned == 0:
+                # center cannot possibly have a connection with any adjacent variable
+                # prune everything from all unassigned variables
+                for dir in range(4):
+                    if adj_vals[dir] is None:
+                        to_prune[adj[dir]] = adj[dir].get_active_domain()
+            elif pointing_to_unassigned == 1:
+                # there is one unassigned variable that can connect to the center, it is in direction pointing_to_dir
+                # prune all the values that don't connect to the center
+                for pipe_type in adj[pointing_to_dir].get_active_domain():
+                    if not pipe_type[(pointing_to_dir + 2) % 4]:
+                        if adj[pointing_to_dir] in to_prune:
+                            to_prune[adj[pointing_to_dir]].append(pipe_type)
                         else:
-                            to_prune[adj[dir]] = [pipe_type]
-        # if more than one edge is unassigned, nothing can be said about what should be removed from the active domain of the edges.
+                            to_prune[adj[pointing_to_dir]] = [pipe_type]
     for var in to_prune:
         var.prune(to_prune[var])
     return to_prune

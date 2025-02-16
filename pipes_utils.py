@@ -1,5 +1,5 @@
+from pipe_typings import *
 import math
-from csp import *
 
 
 def find_adj(center: int, n: int) -> tuple[int, int, int, int]:
