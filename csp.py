@@ -317,8 +317,52 @@ class CSP:
             assignment.append(value)
 
         return assignment
+    
+    def fc_one(self) -> bool:
+        """
+        Solves the csp using forward checking. Solution will be stored in the variable objects related to this csp.
 
-    def forward_checking(self, solutions: list[Assignment]) -> None:
+        :returns: True if a solution was found, false if not.
+        """
+        # if there are no unassigned variables in the csp and it's not already in solutions, then this is a new solution
+        if not self.unassigned_vars:
+            curr_assignment = self.get_assignment()
+            print1DGrid(curr_assignment) # type: ignore
+            return True
+
+        # get an unassigned variable to assign next
+        curr_var = self.unassigned_vars[0]
+        # try every active assignment for the variable
+        for assignment in curr_var.active_domain:
+            self.unassign_var(curr_var)
+            self.assign_var(curr_var, assignment)
+
+            # prune values and accumulate pruned values
+            pruned_domains: dict[Variable, list[PipeType]] = {}
+            no_active_domains = False
+            for con in self.get_cons_with_var(curr_var):
+                pruned = con.prune()
+                for var in pruned:
+                    if var in pruned_domains:
+                        pruned_domains[var] += pruned[var]
+                    else:
+                        pruned_domains[var] = pruned[var]
+
+                if not con.var_has_active_domains():
+                    no_active_domains = True
+                    break
+
+            # no dead-ends, keep going, adding to solutions if everything is assigned
+            if not no_active_domains and self.fc_one():
+                return True
+
+            # restore the active domains and try another variable
+            for var in pruned_domains:
+                var.active_domain += pruned_domains[var]
+        self.unassign_var(curr_var)
+        return False
+
+    def fc_all(self, solutions: list[Assignment]) -> None:
         """
         Solves the csp using forward checking. Solution will be stored in the variable objects related to this csp.
 
@@ -328,11 +372,15 @@ class CSP:
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
             if curr_assignment not in solutions:
-                print1DGrid(curr_assignment) # type: ignore
+                # print1DGrid(curr_assignment) # type: ignore
                 for con in self.cons:
-                    print(f"constraint {con.name} violated: {con.violated()}")
-                print()
+                    violated = con.violated()
+                    if violated:
+                        print(f"constraint {con.name} violated: {con.violated()}")
+                        raise Exception("chyme")
                 solutions.append(curr_assignment)
+                # print(len(solutions))
+                # print()
             return
 
         # get an unassigned variable to assign next
@@ -359,13 +407,14 @@ class CSP:
 
             # no dead-ends, keep going, adding to solutions if everything is assigned
             if not no_active_domains:
-                self.forward_checking(solutions)
+                self.fc_all(solutions)
 
             # restore the active domains and try another variable
             for var in pruned_domains:
                 var.active_domain += pruned_domains[var]
+        self.unassign_var(curr_var)
 
-    def gac(self) -> bool:
+    def gac_one(self) -> bool:
         """
         Solves the csp using generalized arc consistency. Solution will be stored in the variable objects related to this csp.
 
@@ -373,6 +422,8 @@ class CSP:
         """
         # all variables in the csp have been assigned
         if not self.unassigned_vars:
+            curr_assignment = self.get_assignment()
+            print1DGrid(curr_assignment) # type: ignore
             return True
         # get an unassigned variable to assign next
         curr_var = self.unassigned_vars[0]
@@ -392,7 +443,7 @@ class CSP:
                     break
             # this assignment will give a full solution once everything else is assigned
             # the variables will stay assigned after returning
-            if not no_active_domains and self.gac():
+            if not no_active_domains and self.gac_one():
                 return True
 
             # dead-end (no active domains for some variable) reached, restore the active domains
@@ -434,15 +485,15 @@ class CSP:
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
             if curr_assignment not in solutions:
-                print1DGrid(curr_assignment) # type: ignore
+                # print1DGrid(curr_assignment) # type: ignore
                 for con in self.cons:
                     violated = con.violated()
                     if violated:
                         print(f"constraint {con.name} violated: {con.violated()}")
                         raise Exception("chyme")
                 solutions.append(curr_assignment)
-                print(len(solutions))
-                print()
+                # print(len(solutions))
+                # print()
             return
         # get an unassigned variable to assign next
         curr_var = self.unassigned_vars[0]
@@ -470,7 +521,7 @@ class CSP:
                 var.active_domain += pruned_domains[var]
 
         # if the code gets here, then none of the assignable values for the variable work.
-        # unassign the variable and return false to indicate that the csp is unsolvable
+        # unassign the variable
         self.unassign_var(curr_var)
 
 PIPE_CHAR: dict[PipeType, str] = {
