@@ -4,10 +4,10 @@ from pipes_constraints import *
 from pipes_utils import *
 from test_data.loop_grids import print1DGrid
 from tree import validator as tree_validator, pruner as tree_pruner
-from connected import validator as connected_validator
+from connected import validator as connected_validator, pruner as connected_pruner
 
 
-n = 3
+n = 25
 variables: list[Variable] = []
 
 # initialize variable objects
@@ -41,22 +41,36 @@ for i in range(len(variables)):
     if i == 0:
         # top left corner
         connectivity_cons.append(
-            Constraint(name, has_connection_top_left, connectivity_pruner_top_left, con_vars)
+            Constraint(
+                name, has_connection_top_left, connectivity_pruner_top_left, con_vars
+            )
         )
     elif i == n - 1:
         # top right corner
         connectivity_cons.append(
-            Constraint(name, has_connection_top_right, connectivity_pruner_top_right, con_vars)
+            Constraint(
+                name, has_connection_top_right, connectivity_pruner_top_right, con_vars
+            )
         )
     elif i == n * (n - 1):
         # bottom left corner
         connectivity_cons.append(
-            Constraint(name, has_connection_bottom_left, connectivity_pruner_bottom_left, con_vars)
+            Constraint(
+                name,
+                has_connection_bottom_left,
+                connectivity_pruner_bottom_left,
+                con_vars,
+            )
         )
     elif i == n * n - 1:
         # bottom right corner
         connectivity_cons.append(
-            Constraint(name, has_connection_bottom_right, connectivity_pruner_bottom_right, con_vars)
+            Constraint(
+                name,
+                has_connection_bottom_right,
+                connectivity_pruner_bottom_right,
+                con_vars,
+            )
         )
     elif i < n - 1:
         # top row
@@ -76,7 +90,9 @@ for i in range(len(variables)):
     elif i > n * (n - 1):
         # bottom row
         connectivity_cons.append(
-            Constraint(name, has_connection_bottom, connectivity_pruner_bottom, con_vars)
+            Constraint(
+                name, has_connection_bottom, connectivity_pruner_bottom, con_vars
+            )
         )
     else:
         # middle
@@ -119,7 +135,12 @@ no_blocking_cons += no_blocking_h + no_blocking_v
 
 # create tree constraint
 tree_con: Constraint = Constraint("tree", tree_validator, tree_pruner, variables)
-all_cons = connectivity_cons + no_blocking_cons + [tree_con]
+
+connected_con: Constraint = Constraint(
+    "connected", connected_validator, connected_pruner, variables
+)
+all_cons = connectivity_cons + no_blocking_cons + [tree_con, connected_con]
+
 
 # create csp
 csp = CSP("Sewage pAIpes", variables, all_cons)
