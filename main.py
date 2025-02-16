@@ -38,47 +38,47 @@ for i in range(len(variables)):
     if i == 0:
         # top left corner
         connectivity_cons.append(
-            Constraint(name, has_connection, connectivity_pruner_top_left, con_vars)
+            Constraint(name, has_connection_top_left, connectivity_pruner_top_left, con_vars)
         )
     elif i == n - 1:
         # top right corner
         connectivity_cons.append(
-            Constraint(name, has_connection, connectivity_pruner_top_right, con_vars)
+            Constraint(name, has_connection_top_right, connectivity_pruner_top_right, con_vars)
         )
     elif i == n * (n - 1):
         # bottom left corner
         connectivity_cons.append(
-            Constraint(name, has_connection, connectivity_pruner_bottom_left, con_vars)
+            Constraint(name, has_connection_bottom_left, connectivity_pruner_bottom_left, con_vars)
         )
     elif i == n * n - 1:
         # bottom right corner
         connectivity_cons.append(
-            Constraint(name, has_connection, connectivity_pruner_bottom_right, con_vars)
+            Constraint(name, has_connection_bottom_right, connectivity_pruner_bottom_right, con_vars)
         )
     elif i < n - 1:
         # top row
         connectivity_cons.append(
-            Constraint(name, has_connection, connectivity_pruner_top, con_vars)
+            Constraint(name, has_connection_top, connectivity_pruner_top, con_vars)
         )
-    elif i % 5 == 0:
+    elif i % n == 0:
         # left column
         connectivity_cons.append(
-            Constraint(name, has_connection, connectivity_pruner_left, con_vars)
+            Constraint(name, has_connection_left, connectivity_pruner_left, con_vars)
         )
-    elif i % 5 == 4:
+    elif i % n == n - 1:
         # right column
         connectivity_cons.append(
-            Constraint(name, has_connection, connectivity_pruner_right, con_vars)
+            Constraint(name, has_connection_right, connectivity_pruner_right, con_vars)
         )
     elif i > n * (n - 1):
         # bottom row
         connectivity_cons.append(
-            Constraint(name, has_connection, connectivity_pruner_bottom, con_vars)
+            Constraint(name, has_connection_bottom, connectivity_pruner_bottom, con_vars)
         )
     else:
         # middle
         connectivity_cons.append(
-            Constraint(name, has_connection, connectivity_pruner_mid, con_vars)
+            Constraint(name, has_connection_mid, connectivity_pruner_mid, con_vars)
         )
 
 # create binary constraints for no blocking

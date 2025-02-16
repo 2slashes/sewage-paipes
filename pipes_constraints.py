@@ -1,7 +1,7 @@
 from csp import *
 from pipes_utils import *
 
-def has_connection(
+def has_connection_mid(
     pipes: list[PipeType]
 ) -> bool:
     """
@@ -15,6 +15,86 @@ def has_connection(
     """
     adj = (pipes[0], pipes[1], pipes[2], pipes[3])
     connections = check_connections(pipes[4], adj)
+    for c in connections:
+        if c:
+            return True
+    return False
+
+def has_connection_top(
+    pipes: list[PipeType]
+) -> bool:
+    adj = (None, pipes[0], pipes[1], pipes[2])
+    connections = check_connections(pipes[-1], adj)
+    for c in connections:
+        if c:
+            return True
+    return False
+
+def has_connection_right(
+    pipes: list[PipeType]
+) -> bool:
+    adj = (pipes[0], None, pipes[1], pipes[2])
+    connections = check_connections(pipes[-1], adj)
+    for c in connections:
+        if c:
+            return True
+    return False
+
+def has_connection_bottom(
+    pipes: list[PipeType]
+) -> bool:
+    adj = (pipes[0], pipes[1], None, pipes[2])
+    connections = check_connections(pipes[-1], adj)
+    for c in connections:
+        if c:
+            return True
+    return False
+
+def has_connection_left(
+    pipes: list[PipeType]
+) -> bool:
+    adj = (pipes[0], pipes[1], pipes[2], None)
+    connections = check_connections(pipes[-1], adj)
+    for c in connections:
+        if c:
+            return True
+    return False
+
+def has_connection_top_right(
+    pipes: list[PipeType]
+) -> bool:
+    adj = (None, None, pipes[0], pipes[1])
+    connections = check_connections(pipes[-1], adj)
+    for c in connections:
+        if c:
+            return True
+    return False
+
+def has_connection_bottom_right(
+    pipes: list[PipeType]
+) -> bool:
+    adj = (pipes[0], None, None, pipes[1])
+    connections = check_connections(pipes[-1], adj)
+    for c in connections:
+        if c:
+            return True
+    return False
+
+def has_connection_bottom_left(
+    pipes: list[PipeType]
+) -> bool:
+    adj = (pipes[0], pipes[1], None, None)
+    connections = check_connections(pipes[-1], adj)
+    for c in connections:
+        if c:
+            return True
+    return False
+
+def has_connection_top_left(
+    pipes: list[PipeType]
+) -> bool:
+    adj = (None, pipes[0], pipes[1], None)
+    connections = check_connections(pipes[-1], adj)
     for c in connections:
         if c:
             return True

@@ -429,7 +429,7 @@ class CSP:
         curr_var = self.unassigned_vars[0]
         # try every active assignment for the variable
         for assignment in curr_var.active_domain:
-            print(f"assigning value {assignment} to variable {curr_var}")
+            # print(f"assigning value {assignment} to variable {curr_var}")
             self.unassign_var(curr_var)
             self.assign_var(curr_var, assignment)
             pruned_domains: dict[Variable, list[PipeType]] = {}
