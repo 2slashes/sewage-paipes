@@ -1,7 +1,8 @@
-from pipe_typings import *
+from typing import Optional
+from pipe_typings import PipeType
 from csp import Variable
-from pipes_utils import *
 from math import sqrt
+from pipes_utils import find_adj, check_connections
 
 def validator(pipes: list[PipeType]) -> bool:
     """

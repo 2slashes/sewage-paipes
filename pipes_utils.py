@@ -1,4 +1,5 @@
-from pipe_typings import *
+from typing import Optional
+from pipe_typings import PipeType, PartialAssignment
 import math
 
 

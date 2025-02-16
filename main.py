@@ -1,7 +1,6 @@
-from pipe_typings import *
-from csp import *
-from pipes_constraints import *
-from pipes_utils import *
+from csp import Variable, Constraint, CSP, DomainGenerator, find_adj
+from pipes_constraints import connectivity_pruner_bottom, connectivity_pruner_bottom_left, connectivity_pruner_bottom_right, connectivity_pruner_left, connectivity_pruner_mid, connectivity_pruner_right, connectivity_pruner_top, connectivity_pruner_top_left, connectivity_pruner_top_right, has_connection_bottom, has_connection_bottom_left, has_connection_bottom_right, has_connection_left, has_connection_mid, has_connection_right, has_connection_top, has_connection_top_left, has_connection_top_right, not_blocked_h, not_blocked_pruner_h, not_blocked_pruner_v, not_blocked_v
+from pipe_typings import Assignment
 from tree import validator as tree_validator, pruner as tree_pruner
 from connected import validator as connected_validator, pruner as connected_pruner
 
@@ -145,23 +144,3 @@ all_cons = connectivity_cons + no_blocking_cons + [tree_con, connected_con]
 csp = CSP("Sewage pAIpes", variables, all_cons)
 solutions: list[Assignment] = []
 csp.gac_all(solutions)
-
-# for solution in solutions:
-#     constraints_violated: list[Constraint] = []
-#     sub_solution: list[PipeType] = []
-#     for con in all_cons:
-#         scope_vals: list[int] = []
-#         for var in con.get_scope():
-#             scope_vals.append(var.location)
-#         for i in scope_vals:
-#             sub_solution.append(solution[i])
-#         if not con._validator(sub_solution):  # type: ignore
-#             constraints_violated.append(con)
-#     if len(constraints_violated) > 0:
-#         print1DGrid(solution)  # type: ignore
-#         print("Constraints violated:")
-#         for con in constraints_violated:
-#             print(f"{con.name}: {con._validator(sub_solution)}")  # type: ignore
-#     print()
-
-# print(f"{len(solutions)} solutions found")

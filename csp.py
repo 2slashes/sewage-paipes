@@ -60,7 +60,7 @@ class Variable:
     def __init__(
         self,
         location: int,
-        domain: list[PipeType],
+        domain: list[PipeType] = [],
         assignment: Optional[PipeType] = None,
     ):
         """
@@ -182,22 +182,6 @@ class Constraint:
             if not len(var.active_domain):
                 return False
         return True
-
-    # def add_to_scope(self, var: Variable):
-    #     """
-    #     Add a variable to the scope of the constraint.
-
-    #     :param var: A Variable object to be added to the scope.
-    #     """
-    #     self.scope.append(var)
-
-    # def remove_from_scope(self, var: Variable):
-    #     """
-    #     Remove a variable from the scope of the constraint.
-
-    #     :param var: A Variable object to be removed from the scope.
-    #     """
-    #     self.scope.remove(var)
 
     def check_fully_assigned(self):
         """
@@ -333,39 +317,6 @@ class CSP:
             assignment.append(value)
 
         return assignment
-
-    def backtracking_search(self) -> bool:
-        """
-        Solves the csp using recursive backtracking search. Solution will be stored in the variable objects related to this csp.
-
-        :returns: True if a solution was found, false if not.
-        """
-        # if there are no unassigned variables in the csp, then this is a solution
-        if not self.unassigned_vars:
-            return True
-        # get an unassigned variable to assign next
-        curr_var = self.unassigned_vars[0]
-        # try every assignment for the variable
-        for assignment in curr_var.active_domain:
-            self.assign_var(curr_var, assignment)
-
-            # check if the assignment violates any constraint
-            violated = False
-            for con in self.get_cons_with_var(curr_var):
-                if not con.check_fully_assigned():
-                    continue
-                if con.violated():
-                    violated = True
-                    break
-            # this assignment will give a full solution once everything else is assigned
-            # the variables will stay assigned after returning
-            if not violated and self.backtracking_search():
-                return True
-
-        # if the code gets here, then none of the assignable values for the variable work.
-        # unassign the variable and return false to indicate that the csp is unsolvable
-        self.unassign_var(curr_var)
-        return False
 
     def forward_checking(self, solutions: list[Assignment]) -> None:
         """
