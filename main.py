@@ -26,7 +26,7 @@ from pipes_constraints import (
 )
 from pipe_typings import Assignment
 from tree import validator as tree_validator, pruner as tree_pruner
-from connected import validator as connected_validator, pruner as connected_pruner]
+from connected import validator as connected_validator, pruner as connected_pruner
 
 
 n = 4
