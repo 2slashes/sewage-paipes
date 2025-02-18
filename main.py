@@ -26,7 +26,7 @@ from pipes_constraints import (
 )
 from pipe_typings import Assignment
 from tree import validator as tree_validator, pruner as tree_pruner
-from connected import validator as connected_validator, pruner as connected_pruner
+from connected import validator as connected_validator, pruner as connected_pruner]
 
 
 n = 4
@@ -170,9 +170,4 @@ solutions_gac: list[Assignment] = []
 t0 = time.time()
 csp.gac_all(solutions_gac)
 t1 = time.time()
-print(f"gac time: {t1 - t0}")
-solutions_fc: list[Assignment] = []
-t2 = time.time()
-csp.fc_all(solutions_fc)
-t3 = time.time()
-print(f"fc time: {t3 - t2}")
+print(f"time: {t1 - t0}")

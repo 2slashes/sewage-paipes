@@ -485,15 +485,14 @@ class CSP:
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
             if curr_assignment not in solutions:
-                # print1DGrid(curr_assignment) # type: ignore
+                print1DGrid(curr_assignment) # type: ignore
                 for con in self.cons:
                     violated = con.violated()
                     if violated:
-                        print(f"constraint {con.name} violated: {con.violated()}")
-                        raise Exception("chyme")
+                        raise Exception(f"constraint {con.name} violated: {con.violated()}")
                 solutions.append(curr_assignment)
-                # print(len(solutions))
-                # print()
+                print(len(solutions))
+                print()
             return
         # get an unassigned variable to assign next
         curr_var = self.unassigned_vars[0]
