@@ -1,8 +1,9 @@
 from typing import Optional
 from pipe_typings import PipeType
-from csp import Variable
+from csp import Assignment, Variable
 from math import sqrt
 from pipes_utils import find_adj, check_connections
+
 
 def validator(pipes: list[PipeType]) -> bool:
     """
@@ -38,36 +39,6 @@ def dft(pipes: list[PipeType], loc: int, visited: list[int]) -> None:
             dft(pipes, adj_vals[i], visited)
 
 
-# def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
-#     pseudo_assignment = pseudo_assign(variables)
-#     can_be_connected = validator(pseudo_assignment)
-#     pruned: dict[Variable, list[PipeType]] = {}
-
-#     if not can_be_connected:
-#         for var in variables:
-#             if var.get_assignment() is None:
-#                 pruned = {var: var.get_active_domain()}
-#                 var.prune(var.get_active_domain())
-#                 break
-#     return pruned
-
-def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
-    pruned: dict[Variable, list[PipeType]] = {}
-    pseudo_assignment = pseudo_assign(variables)
-    pruned: dict[Variable, list[PipeType]] = {}
-
-    can_be_connected = validator(pseudo_assignment)
-    if not can_be_connected:
-        for var in variables:
-            if var.get_assignment() is None:
-                pruned = {var: var.get_active_domain()}
-                var.prune(var.get_active_domain())
-                break
-    else:
-        for i in range(len(pseudo_assignment)):
-            find_isolated_path(variables, pseudo_assignment, i, -1, pruned)
-    return pruned
-
 def pseudo_assign(variables: list[Variable]) -> list[PipeType]:
     """
     Creates a "pseudo assignment" of pipes. A pseudo assignment is created by taking the active domains of assigned variables and creating a PipeType containing all the possible directions that the unassigned variable could point in.
@@ -98,39 +69,98 @@ def pseudo_assign(variables: list[Variable]) -> list[PipeType]:
 
     return pseudo_assignment
 
-def find_isolated_path(variables : list[Variable], pseudo_assignment: list[PipeType], i: int, last_dir: int, pruned: dict[Variable, list[PipeType]]):
-    main_pipe = pseudo_assignment[i]
-    main_var = variables[i]
-    adj_index = find_adj(i, int(sqrt(len(pseudo_assignment))))
-    to_prune: list[PipeType] = []
-    # holds adjacent PipeTypes, not including the pipe that came before in the path
-    adj_pipe_list: list[Optional[PipeType]] = [None, None, None, None]
-    for i in range(4):
-        if adj_index[i] != -1 and i != last_dir:
-            adj_pipe_list[i] = pseudo_assignment[adj_index[i]]
-    adj_pipes = (adj_pipe_list[0], adj_pipe_list[1], adj_pipe_list[2], adj_pipe_list[3])
-    connections = check_connections(main_pipe, adj_pipes)
-    num_connections = 0
-    cur_dir = 0
-    for i in range(4):
-        if connections[i]:
-            num_connections += 1
-            cur_dir = i
-    if num_connections == 1:
-        # the path continues, prune from current variable
-        path_dir = 0
-        for i in range(4):
-            if connections[i] and i != last_dir:
-                path_dir = i
-                break
-        if main_var.get_assignment() is None:
-            active_domain = main_var.get_active_domain()
-            for assignment in active_domain:
-                if not assignment[cur_dir] or (last_dir != -1 and not assignment[last_dir]):
-                    to_prune.append(assignment)
-                    if main_var in pruned:
-                        pruned[main_var].append(assignment)
+
+def prune_edges(
+    variables: list[Variable], edge: tuple[int, int]
+) -> dict[Variable, list[PipeType]]:
+    """
+    Prunes pipes that does not serve as an edge (connection) between two adjacent squares
+    """
+    n = int(sqrt(len(variables)))
+    pruned: dict[Variable, list[PipeType]] = {}
+    adj = find_adj(edge[0], n)
+    for index, square in enumerate(adj):
+        if edge[1] == square:
+            for domain in variables[edge[0]].get_active_domain():
+                if not domain[index]:
+                    var_to_prune = variables[edge[0]]
+                    var_to_prune.prune([domain])
+                    if not var_to_prune in pruned:
+                        pruned[var_to_prune] = [domain]
                     else:
-                        pruned[main_var] = [assignment]
-            main_var.prune(to_prune)
-        find_isolated_path(variables, pseudo_assignment, adj_index[path_dir], (path_dir + 2) % 4, pruned)
+                        pruned[var_to_prune].append(domain)
+            opposite_index = (index + 2) % 4
+            for domain in variables[edge[1]].get_active_domain():
+                if not domain[opposite_index]:
+                    var_to_prune = variables[edge[1]]
+                    variables[edge[1]].prune([domain])
+                    if not var_to_prune in pruned:
+                        pruned[var_to_prune] = [domain]
+                    else:
+                        pruned[var_to_prune].append(domain)
+            break
+    return pruned
+
+
+def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
+    pseudo_assignment = pseudo_assign(variables)
+    time = -1
+    disc: dict[int, int] = {}
+    low: dict[int, int] = {}
+    bridges: list[tuple[int, int]] = []
+
+    tarjan_traversal(
+        assignment=pseudo_assignment,
+        loc=0,
+        time=time,
+        disc=disc,
+        low=low,
+        bridges=bridges,
+    )
+    result: dict[Variable, list[PipeType]] = {}
+    for bridge in bridges:
+        pruned = prune_edges(variables, bridge)
+        for var in pruned:
+            if not var in result:
+                result[var] = pruned[var]
+            else:
+                result[var].extend(pruned[var])
+    return result
+
+
+def tarjan_traversal(
+    assignment: Assignment,
+    loc: int,
+    time: int,
+    disc: dict[int, int],
+    low: dict[int, int],
+    bridges: list[tuple[int, int]],
+):
+    time += 1
+    disc[loc] = time
+    low[loc] = time
+
+    adj_indices = find_adj(loc, int(sqrt(len(assignment))))
+    top_val: Optional[PipeType] = None
+    if adj_indices[0] != -1:
+        top_val = assignment[adj_indices[0]]
+    right_val: Optional[PipeType] = None
+    if adj_indices[1] != -1:
+        right_val = assignment[adj_indices[1]]
+    bottom_val: Optional[PipeType] = None
+    if adj_indices[2] != -1:
+        bottom_val = assignment[adj_indices[2]]
+    left_val: Optional[PipeType] = None
+    if adj_indices[3] != -1:
+        left_val = assignment[adj_indices[3]]
+    connections: tuple[bool, bool, bool, bool] = check_connections(
+        assignment[loc], (top_val, right_val, bottom_val, left_val)
+    )
+
+    for direction in range(4):
+        curr_neighbor = adj_indices[direction]
+        if connections[direction] and curr_neighbor not in disc:
+            tarjan_traversal(assignment, curr_neighbor, time, disc, low, bridges)
+            low[loc] = min(low[loc], low[curr_neighbor])
+            if low[curr_neighbor] > disc[loc]:
+                bridges.append((loc, curr_neighbor))
