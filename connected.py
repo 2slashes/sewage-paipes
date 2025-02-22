@@ -1,6 +1,6 @@
 from typing import Optional
 from pipe_typings import PipeType
-from csp import Assignment, Variable
+from csp import Assignment, Variable, print1DGrid
 from math import sqrt
 from pipes_utils import find_adj, check_connections
 
@@ -135,12 +135,14 @@ def tarjan_traversal(
     disc: dict[int, int],
     low: dict[int, int],
     bridges: list[tuple[int, int]],
+    parent: Optional[int] = None,
 ):
     time += 1
     disc[loc] = time
     low[loc] = time
 
     adj_indices = find_adj(loc, int(sqrt(len(assignment))))
+
     top_val: Optional[PipeType] = None
     if adj_indices[0] != -1:
         top_val = assignment[adj_indices[0]]
@@ -159,8 +161,14 @@ def tarjan_traversal(
 
     for direction in range(4):
         curr_neighbor = adj_indices[direction]
-        if connections[direction] and curr_neighbor not in disc:
-            tarjan_traversal(assignment, curr_neighbor, time, disc, low, bridges)
-            low[loc] = min(low[loc], low[curr_neighbor])
-            if low[curr_neighbor] > disc[loc]:
-                bridges.append((loc, curr_neighbor))
+        if connections[direction] and curr_neighbor != parent:
+            if curr_neighbor not in disc:
+                time = tarjan_traversal(
+                    assignment, curr_neighbor, time, disc, low, bridges, parent=loc
+                )
+                low[loc] = min(low[loc], low[curr_neighbor])
+                if low[curr_neighbor] > disc[loc]:
+                    bridges.append((loc, curr_neighbor))
+            else:
+                low[loc] = min(low[loc], low[curr_neighbor])
+    return time
