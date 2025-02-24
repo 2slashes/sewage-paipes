@@ -70,73 +70,65 @@ def pseudo_assign(variables: list[Variable]) -> list[PipeType]:
     return pseudo_assignment
 
 
-def prune_edges(
-    variables: list[Variable], edge: tuple[int, int]
-) -> dict[Variable, list[PipeType]]:
+def optimistic_psuedo_assign(variables: list[Variable]) -> list[PipeType]:
     """
-    Prunes pipes that does not serve as an edge (connection) between two adjacent squares
+    Same as pseudo_assign, but assumes (True, True, True, True) if unassigned
+
+    :params variables: All the variables for the csp.
+    :returns: List containing pseudo-assigned values for the variables
     """
-    n = int(sqrt(len(variables)))
-    pruned: dict[Variable, list[PipeType]] = {}
-    adj = find_adj(edge[0], n)
-    for index, square in enumerate(adj):
-        if edge[1] == square:
-            for domain in variables[edge[0]].get_active_domain():
-                if not domain[index]:
-                    var_to_prune = variables[edge[0]]
-                    var_to_prune.prune([domain])
-                    if not var_to_prune in pruned:
-                        pruned[var_to_prune] = [domain]
-                    else:
-                        pruned[var_to_prune].append(domain)
-            opposite_index = (index + 2) % 4
-            for domain in variables[edge[1]].get_active_domain():
-                if not domain[opposite_index]:
-                    var_to_prune = variables[edge[1]]
-                    variables[edge[1]].prune([domain])
-                    if not var_to_prune in pruned:
-                        pruned[var_to_prune] = [domain]
-                    else:
-                        pruned[var_to_prune].append(domain)
-            break
-    return pruned
+    pseudo_assignment: list[PipeType] = []
+    for var in variables:
+        assignment = var.get_assignment()
+        if assignment is not None:
+            pseudo_assignment.append(assignment)
+        else:
+            pseudo_assignment.append((True, True, True, True))
+    return pseudo_assignment
 
 
 def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
-    pseudo_assignment = pseudo_assign(variables)
+    pseudo_assignment = optimistic_psuedo_assign(variables)
     time = -1
     disc: dict[int, int] = {}
     low: dict[int, int] = {}
-    bridges: list[tuple[int, int]] = []
+    articulation_points: set[int] = set()
 
-    tarjan_traversal(
+    find_articulation_points(
         assignment=pseudo_assignment,
         loc=0,
         time=time,
         disc=disc,
         low=low,
-        bridges=bridges,
+        articulation_points=articulation_points,
     )
     result: dict[Variable, list[PipeType]] = {}
-    for bridge in bridges:
-        pruned = prune_edges(variables, bridge)
-        for var in pruned:
-            if not var in result:
-                result[var] = pruned[var]
-            else:
-                result[var].extend(pruned[var])
+    for point in articulation_points:
+        var_to_prune = variables[point]
+        for potential_assignment in var_to_prune.get_active_domain():
+            assignment = pseudo_assignment.copy()
+            assignment[point] = potential_assignment
+            if not validator(assignment):
+                if var_to_prune not in result:
+                    result[var_to_prune] = [potential_assignment]
+                else:
+                    result[var_to_prune].append(potential_assignment)
+                var_to_prune.prune([potential_assignment])
     return result
 
 
-def tarjan_traversal(
+def find_articulation_points(
     assignment: Assignment,
     loc: int,
     time: int,
     disc: dict[int, int],
     low: dict[int, int],
-    bridges: list[tuple[int, int]],
+    articulation_points: set[int],
     parent: Optional[int] = None,
 ):
+    """
+    Uses Tarjan's algorithm to find articulation points in the graph
+    """
     time += 1
     disc[loc] = time
     low[loc] = time
@@ -159,16 +151,26 @@ def tarjan_traversal(
         assignment[loc], (top_val, right_val, bottom_val, left_val)
     )
 
+    child_count = 0
     for direction in range(4):
         curr_neighbor = adj_indices[direction]
         if connections[direction] and curr_neighbor != parent:
             if curr_neighbor not in disc:
-                time = tarjan_traversal(
-                    assignment, curr_neighbor, time, disc, low, bridges, parent=loc
+                child_count += 1
+                time = find_articulation_points(
+                    assignment,
+                    curr_neighbor,
+                    time,
+                    disc,
+                    low,
+                    articulation_points,
+                    parent=loc,
                 )
                 low[loc] = min(low[loc], low[curr_neighbor])
-                if low[curr_neighbor] > disc[loc]:
-                    bridges.append((loc, curr_neighbor))
+                if low[curr_neighbor] >= disc[loc]:
+                    articulation_points.add(loc)
+                if child_count > 1 and parent is None:
+                    articulation_points.add(loc)
             else:
-                low[loc] = min(low[loc], low[curr_neighbor])
+                low[loc] = min(low[loc], disc[curr_neighbor])
     return time

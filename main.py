@@ -162,6 +162,7 @@ connected_con: Constraint = Constraint(
     "connected", connected_validator, connected_pruner, variables
 )
 all_cons = connectivity_cons + no_blocking_cons + [tree_con, connected_con]
+all_cons = no_blocking_cons + [tree_con, connected_con]
 
 
 # create csp

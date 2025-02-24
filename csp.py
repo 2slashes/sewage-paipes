@@ -542,7 +542,8 @@ PIPE_CHAR: dict[PipeType, str] = {
     (True, True, False, True): "┴",  # T-junction (left, right, down)
     (True, False, True, True): "┤",  # T-junction (right, down, up)
     (False, True, True, True): "┬",  # T-junction (left, right, up)
-    (True, True, True, True): "+",
+    (True, True, True, True): "┼",
+    (False, False, False, False): "*",
 }
 PipeName = Literal[
     "Up",
