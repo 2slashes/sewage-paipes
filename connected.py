@@ -105,15 +105,16 @@ def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
     result: dict[Variable, list[PipeType]] = {}
     for point in articulation_points:
         var_to_prune = variables[point]
-        for potential_assignment in var_to_prune.get_active_domain():
-            assignment = pseudo_assignment.copy()
-            assignment[point] = potential_assignment
-            if not validator(assignment):
-                if var_to_prune not in result:
-                    result[var_to_prune] = [potential_assignment]
-                else:
-                    result[var_to_prune].append(potential_assignment)
-                var_to_prune.prune([potential_assignment])
+        if var_to_prune.get_assignment() == None:
+            for potential_assignment in var_to_prune.get_active_domain():
+                assignment = pseudo_assignment.copy()
+                assignment[point] = potential_assignment
+                if not validator(assignment):
+                    if var_to_prune not in result:
+                        result[var_to_prune] = [potential_assignment]
+                    else:
+                        result[var_to_prune].append(potential_assignment)
+                    var_to_prune.prune([potential_assignment])
     return result
 
 
@@ -150,7 +151,6 @@ def find_articulation_points(
     connections: tuple[bool, bool, bool, bool] = check_connections(
         assignment[loc], (top_val, right_val, bottom_val, left_val)
     )
-
     child_count = 0
     for direction in range(4):
         curr_neighbor = adj_indices[direction]
@@ -167,10 +167,12 @@ def find_articulation_points(
                     parent=loc,
                 )
                 low[loc] = min(low[loc], low[curr_neighbor])
-                if low[curr_neighbor] >= disc[loc]:
-                    articulation_points.add(loc)
-                if child_count > 1 and parent is None:
-                    articulation_points.add(loc)
+                if parent == None:
+                    if child_count > 1:
+                        articulation_points.add(loc)
+                else:
+                    if low[curr_neighbor] >= disc[loc]:
+                        articulation_points.add(loc)
             else:
                 low[loc] = min(low[loc], disc[curr_neighbor])
     return time
