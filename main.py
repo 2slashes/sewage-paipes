@@ -49,78 +49,78 @@ for i in range(n):
 
 all_cons: list[Constraint] = []
 # create constraints for connectivity
-connectivity_cons: list[Constraint] = []
-# there is one connectivity constraint for each variable
-for i in range(len(variables)):
-    adj: list[int] = list(find_adj(i, n))
-    # adj_variables holds the variables for the connectivity constraint
-    adj_variables: list[Variable] = []
-    for dir in range(4):
-        if adj[dir] != -1:
-            adj_variables.append(variables[adj[dir]])
-    con_vars: list[Variable] = adj_variables + [variables[i]]
-    name = f"connectivity {i}"
-    if i == 0:
-        # top left corner
-        connectivity_cons.append(
-            Constraint(
-                name, has_connection_top_left, connectivity_pruner_top_left, con_vars
-            )
-        )
-    elif i == n - 1:
-        # top right corner
-        connectivity_cons.append(
-            Constraint(
-                name, has_connection_top_right, connectivity_pruner_top_right, con_vars
-            )
-        )
-    elif i == n * (n - 1):
-        # bottom left corner
-        connectivity_cons.append(
-            Constraint(
-                name,
-                has_connection_bottom_left,
-                connectivity_pruner_bottom_left,
-                con_vars,
-            )
-        )
-    elif i == n * n - 1:
-        # bottom right corner
-        connectivity_cons.append(
-            Constraint(
-                name,
-                has_connection_bottom_right,
-                connectivity_pruner_bottom_right,
-                con_vars,
-            )
-        )
-    elif i < n - 1:
-        # top row
-        connectivity_cons.append(
-            Constraint(name, has_connection_top, connectivity_pruner_top, con_vars)
-        )
-    elif i % n == 0:
-        # left column
-        connectivity_cons.append(
-            Constraint(name, has_connection_left, connectivity_pruner_left, con_vars)
-        )
-    elif i % n == n - 1:
-        # right column
-        connectivity_cons.append(
-            Constraint(name, has_connection_right, connectivity_pruner_right, con_vars)
-        )
-    elif i > n * (n - 1):
-        # bottom row
-        connectivity_cons.append(
-            Constraint(
-                name, has_connection_bottom, connectivity_pruner_bottom, con_vars
-            )
-        )
-    else:
-        # middle
-        connectivity_cons.append(
-            Constraint(name, has_connection_mid, connectivity_pruner_mid, con_vars)
-        )
+# connectivity_cons: list[Constraint] = []
+# # there is one connectivity constraint for each variable
+# for i in range(len(variables)):
+#     adj: list[int] = list(find_adj(i, n))
+#     # adj_variables holds the variables for the connectivity constraint
+#     adj_variables: list[Variable] = []
+#     for dir in range(4):
+#         if adj[dir] != -1:
+#             adj_variables.append(variables[adj[dir]])
+#     con_vars: list[Variable] = adj_variables + [variables[i]]
+#     name = f"connectivity {i}"
+#     if i == 0:
+#         # top left corner
+#         connectivity_cons.append(
+#             Constraint(
+#                 name, has_connection_top_left, connectivity_pruner_top_left, con_vars
+#             )
+#         )
+#     elif i == n - 1:
+#         # top right corner
+#         connectivity_cons.append(
+#             Constraint(
+#                 name, has_connection_top_right, connectivity_pruner_top_right, con_vars
+#             )
+#         )
+#     elif i == n * (n - 1):
+#         # bottom left corner
+#         connectivity_cons.append(
+#             Constraint(
+#                 name,
+#                 has_connection_bottom_left,
+#                 connectivity_pruner_bottom_left,
+#                 con_vars,
+#             )
+#         )
+#     elif i == n * n - 1:
+#         # bottom right corner
+#         connectivity_cons.append(
+#             Constraint(
+#                 name,
+#                 has_connection_bottom_right,
+#                 connectivity_pruner_bottom_right,
+#                 con_vars,
+#             )
+#         )
+#     elif i < n - 1:
+#         # top row
+#         connectivity_cons.append(
+#             Constraint(name, has_connection_top, connectivity_pruner_top, con_vars)
+#         )
+#     elif i % n == 0:
+#         # left column
+#         connectivity_cons.append(
+#             Constraint(name, has_connection_left, connectivity_pruner_left, con_vars)
+#         )
+#     elif i % n == n - 1:
+#         # right column
+#         connectivity_cons.append(
+#             Constraint(name, has_connection_right, connectivity_pruner_right, con_vars)
+#         )
+#     elif i > n * (n - 1):
+#         # bottom row
+#         connectivity_cons.append(
+#             Constraint(
+#                 name, has_connection_bottom, connectivity_pruner_bottom, con_vars
+#             )
+#         )
+#     else:
+#         # middle
+#         connectivity_cons.append(
+#             Constraint(name, has_connection_mid, connectivity_pruner_mid, con_vars)
+#         )
 
 # create binary constraints for no blocking
 no_blocking_cons: list[Constraint] = []
@@ -161,7 +161,7 @@ tree_con: Constraint = Constraint("tree", tree_validator, tree_pruner, variables
 connected_con: Constraint = Constraint(
     "connected", connected_validator, connected_pruner, variables
 )
-all_cons = connectivity_cons + no_blocking_cons + [tree_con, connected_con]
+all_cons = no_blocking_cons + [tree_con, connected_con]
 
 
 # create csp
