@@ -27,9 +27,10 @@ from pipes_constraints import (
 from pipe_typings import Assignment
 from tree import validator as tree_validator, pruner as tree_pruner
 from connected import validator as connected_validator, pruner as connected_pruner
+from random_rotation import random_rotate_board
 
 
-n = 4
+n = 3
 variables: list[Variable] = []
 
 # initialize variable objects
@@ -171,3 +172,19 @@ t0 = time.time()
 csp.gac_all(solutions_gac)
 t1 = time.time()
 print(f"time: {t1 - t0}")
+random_rotation = random_rotate_board(solutions_gac[0])
+for i, pipe in enumerate(solutions_gac[0]):
+    for dir in range(len(pipe)):
+        if pipe[dir]:
+            if dir == 0:
+                # up
+                print(f"(open-up p{i})")
+            elif dir == 1:
+                # right
+                print(f"(open-right p{i})")
+            elif dir == 2:
+                # down
+                print(f"(open-down p{i})")
+            else:
+                # left
+                print(f"(open-left p{i})")
