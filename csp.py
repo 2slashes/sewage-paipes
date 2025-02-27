@@ -3,6 +3,7 @@ from typing import Optional, Callable, Literal
 from math import sqrt
 from pipes_utils import *
 
+
 class DomainGenerator:
     all_domain: list[PipeType] = [
         (True, True, True, False),
@@ -317,7 +318,41 @@ class CSP:
             assignment.append(value)
 
         return assignment
-    
+
+    def backtrack(self, solutions: list[Assignment]) -> None:
+        """
+        Solves the csp using backtracking
+        """
+        if not self.unassigned_vars:
+            curr_assignment = self.get_assignment()
+            if curr_assignment not in solutions:
+                for con in self.cons:
+                    violated = con.violated()
+                    if violated:
+                        return
+                print1DGrid(curr_assignment)  # type: ignore
+                solutions.append(curr_assignment)
+                print(len(solutions))
+                print()
+            return
+
+        # get an unassigned variable to assign next
+        curr_var = self.unassigned_vars[0]
+        # try every active assignment for the variable
+        for assignment in curr_var.active_domain:
+            self.assign_var(curr_var, assignment)
+
+            violated = False
+            for con in self.get_cons_with_var(curr_var):
+                if con.check_fully_assigned():
+                    if con.violated():
+                        violated = True
+                        break
+
+            if not violated:
+                self.backtrack(solutions)
+            self.unassign_var(curr_var)
+
     def fc_one(self) -> bool:
         """
         Solves the csp using forward checking. Solution will be stored in the variable objects related to this csp.
@@ -327,7 +362,7 @@ class CSP:
         # if there are no unassigned variables in the csp and it's not already in solutions, then this is a new solution
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
-            print1DGrid(curr_assignment) # type: ignore
+            print1DGrid(curr_assignment)  # type: ignore
             return True
 
         # get an unassigned variable to assign next
@@ -423,7 +458,7 @@ class CSP:
         # all variables in the csp have been assigned
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
-            print1DGrid(curr_assignment) # type: ignore
+            print1DGrid(curr_assignment)  # type: ignore
             return True
         # get an unassigned variable to assign next
         curr_var = self.unassigned_vars[0]
@@ -474,7 +509,7 @@ class CSP:
                     if c not in q:
                         q.append(c)
         return pruned_domains
-    
+
     def gac_all(self, solutions: list[Assignment]) -> None:
         """
         Finds all solutions to the csp using generalized arc consistency. Solutions will be stored in the solutions list that is passed in as a parameter.
@@ -485,11 +520,13 @@ class CSP:
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
             if curr_assignment not in solutions:
-                print1DGrid(curr_assignment) # type: ignore
+                print1DGrid(curr_assignment)  # type: ignore
                 for con in self.cons:
                     violated = con.violated()
                     if violated:
-                        raise Exception(f"constraint {con.name} violated: {con.violated()}")
+                        raise Exception(
+                            f"constraint {con.name} violated: {con.violated()}"
+                        )
                 solutions.append(curr_assignment)
                 print(len(solutions))
                 print()
@@ -522,6 +559,7 @@ class CSP:
         # if the code gets here, then none of the assignable values for the variable work.
         # unassign the variable
         self.unassign_var(curr_var)
+
 
 PIPE_CHAR: dict[PipeType, str] = {
     (True, False, False, False): "╵",  # Open at the top
