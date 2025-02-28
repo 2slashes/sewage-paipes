@@ -1,5 +1,4 @@
 from pipe_typings import PipeType
-from csp import print1DGrid
 import random
 
 def clockwise_rotate(pipe: PipeType, num_rotations: int) -> PipeType:
@@ -23,6 +22,4 @@ def random_rotate_board(board: list[PipeType]):
         num_rotations = random.randint(0, 3)
         new_pipe = clockwise_rotate(pipe, num_rotations)
         new_board.append(new_pipe)
-
-    print1DGrid(new_board) # type: ignore
     return new_board

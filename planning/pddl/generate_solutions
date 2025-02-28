@@ -1,0 +1,45 @@
+# needs to iterate through a specified folder (or through all folders whose names are an int)
+# for each file in the folder, run the following:
+# downward --sas-file solutions/folder/file.sas domain.pddl folder/file.pddl
+# for each line in the new sas file (from top to bottom), check if it matches (regex?) with the format "action object"
+# this might need a list of all objects in the problem
+# if it does, add the current state and action to a csv file, then update the current state by applying the action
+#!/bin/bash
+
+# iterate through all directories in the current folder
+for dir in problems/*/; do
+    dir_name="${dir%/}"
+    base_name=$(basename "$dir_name")
+    echo $base_name
+    echo $dir_name
+
+    # check if the directory name is an integer
+    if [[ "$base_name" =~ ^[0-9]+$ ]]
+    then
+        echo "Processing directory: $dir_name"
+
+        # create solutions directory
+        echo $base_name
+        mkdir -p "solutions/$base_name"
+
+        # iterate through all files in the directory
+        for file in "$dir_name"/*; do
+            if [[ -f "$file" ]]
+            then
+                file_name=$(basename "$file")
+
+                # check if the file name matches the pattern "problem{integer}.pddl"
+                if [[ "$file_name" =~ ^problem([0-9]+)\.pddl$ ]]
+                then
+                    problem_number="${BASH_REMATCH[1]}"
+                    solution_dir="solutions/$base_name/"
+                    mkdir -p "$solution_dir/$base_name/"
+                    solution_file="$solution_dir/${problem_number}.sas"
+                    echo "Using $file as problem for fast-downward"
+                    echo "Output in $solution_file"
+                    downward --sas-file "$solution_file" domain.pddl "$file"
+                fi
+            fi
+        done
+    fi
+done

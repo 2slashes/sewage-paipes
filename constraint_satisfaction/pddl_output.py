@@ -24,13 +24,13 @@ def generate_pddl_pipes_init(initial_state: Assignment) -> str:
         for dir in range(4):
             if pipe[dir]:
                 if dir == 0:
-                    output += f"        (open_up p{i})\n"
+                    output += f"        (open-up p{i})\n"
                 if dir == 1:
-                    output += f"        (open_right p{i})\n"
+                    output += f"        (open-right p{i})\n"
                 if dir == 2:
-                    output += f"        (open_down p{i})\n"
+                    output += f"        (open-down p{i})\n"
                 if dir == 3:
-                    output += f"        (open_left p{i})\n"
+                    output += f"        (open-left p{i})\n"
     return output
 
 def generate_pddl_pipes_goal(goal_state: Assignment) -> str:
@@ -39,12 +39,12 @@ def generate_pddl_pipes_goal(goal_state: Assignment) -> str:
         for dir in range(4):
             if pipe[dir]:
                 if dir == 0:
-                    output += f"            (open_up p{i})\n"
+                    output += f"            (open-up p{i})\n"
                 if dir == 1:
-                    output += f"            (open_right p{i})\n"
+                    output += f"            (open-right p{i})\n"
                 if dir == 2:
-                    output += f"            (open_down p{i})\n"
+                    output += f"            (open-down p{i})\n"
                 if dir == 3:
-                    output += f"            (open_left p{i})\n"
-    output += "        )\n"
+                    output += f"            (open-left p{i})\n"
+    output += "        )"
     return output

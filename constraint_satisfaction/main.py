@@ -1,24 +1,6 @@
 import time
-from csp import Variable, Constraint, CSP, DomainGenerator, find_adj
+from csp import Variable, Constraint, CSP, DomainGenerator
 from pipes_constraints import (
-    connectivity_pruner_bottom,
-    connectivity_pruner_bottom_left,
-    connectivity_pruner_bottom_right,
-    connectivity_pruner_left,
-    connectivity_pruner_mid,
-    connectivity_pruner_right,
-    connectivity_pruner_top,
-    connectivity_pruner_top_left,
-    connectivity_pruner_top_right,
-    has_connection_bottom,
-    has_connection_bottom_left,
-    has_connection_bottom_right,
-    has_connection_left,
-    has_connection_mid,
-    has_connection_right,
-    has_connection_top,
-    has_connection_top_left,
-    has_connection_top_right,
     not_blocked_h,
     not_blocked_pruner_h,
     not_blocked_pruner_v,
@@ -29,7 +11,7 @@ from tree import validator as tree_validator, pruner as tree_pruner
 from connected import validator as connected_validator, pruner as connected_pruner
 from random_rotation import random_rotate_board
 from pddl_output import generate_pddl
-
+import os
 
 n = 3
 variables: list[Variable] = []
@@ -173,7 +155,7 @@ t0 = time.time()
 csp.gac_all(solutions_gac)
 t1 = time.time()
 print(f"time: {t1 - t0}")
-random_rotation = random_rotate_board(solutions_gac[0])
+
 # for i, pipe in enumerate(solutions_gac[0]):
 #     for dir in range(len(pipe)):
 #         if pipe[dir]:
@@ -190,4 +172,22 @@ random_rotation = random_rotate_board(solutions_gac[0])
 #                 # left
 #                 print(f"(open-left p{i})")
 
-print(generate_pddl("chyme", "pipes", random_rotation, solutions_gac[0]))
+
+directory_name = f"planning/pddl/problems/{n}/"
+try:
+    os.makedirs(directory_name)
+    print(f"Directory '{directory_name}' created successfully.")
+except FileExistsError:
+    print(f"Directory '{directory_name}' already exists.")
+except PermissionError:
+    print(f"Permission denied: Unable to create '{directory_name}'.")
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+for i, solution in enumerate(solutions_gac):
+    random_rotation = random_rotate_board(solutions_gac[0])
+    
+    pddl: str = generate_pddl(f"pipes{i}", "pipes", random_rotation, solution)
+
+    with open(f"{directory_name}problem{i}.pddl", "w") as file:
+        file.write(pddl)

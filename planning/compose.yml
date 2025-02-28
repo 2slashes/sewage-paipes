@@ -3,8 +3,7 @@ services:
     build: .
     container_name: planutils
     volumes:
-      - ./problems:/problems
-      - ./plans:/plans
-    working_dir: /problems
+      - ./pddl:/root
+    working_dir: /root
     privileged: true
     tty: true

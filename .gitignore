@@ -153,3 +153,6 @@ dmypy.json
 cython_debug/
 
 tests/
+planning/pddl/problems/
+planning/pddl/solutions/
+planning/pddl/.apptainer
