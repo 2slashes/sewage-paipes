@@ -156,3 +156,4 @@ tests/
 planning/pddl/problems/
 planning/pddl/solutions/
 planning/pddl/.apptainer
+.bash_history

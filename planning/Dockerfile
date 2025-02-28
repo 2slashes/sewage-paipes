@@ -1,1 +1,0 @@
-FROM aiplanning/planutils:latest
