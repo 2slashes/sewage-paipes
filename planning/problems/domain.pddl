@@ -196,6 +196,7 @@
             (open-right ?p)
         )
     )
+
     (:action ROTATE_PIPE_LEFT_UP_RIGHT
         ; Rotate a pipe that has openings facing left, up and right 90 degrees clockwise, such that the openings are facing up, right and down.
         :parameters (?p - pipe)

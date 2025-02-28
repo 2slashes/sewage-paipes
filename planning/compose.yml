@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    container_name: planutils
+    volumes:
+      - ./problems:/problems
+      - ./plans:/plans
+    working_dir: /problems
+    privileged: true
+    tty: true

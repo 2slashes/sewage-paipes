@@ -12,6 +12,7 @@
         p7 - pipe
         p8 - pipe
     )
+
     (:init
         (open-right p0)
         (open-down p0)
