@@ -32,79 +32,6 @@ for i in range(n):
     variables += row
 
 all_cons: list[Constraint] = []
-# create constraints for connectivity
-# connectivity_cons: list[Constraint] = []
-# # there is one connectivity constraint for each variable
-# for i in range(len(variables)):
-#     adj: list[int] = list(find_adj(i, n))
-#     # adj_variables holds the variables for the connectivity constraint
-#     adj_variables: list[Variable] = []
-#     for dir in range(4):
-#         if adj[dir] != -1:
-#             adj_variables.append(variables[adj[dir]])
-#     con_vars: list[Variable] = adj_variables + [variables[i]]
-#     name = f"connectivity {i}"
-#     if i == 0:
-#         # top left corner
-#         connectivity_cons.append(
-#             Constraint(
-#                 name, has_connection_top_left, connectivity_pruner_top_left, con_vars
-#             )
-#         )
-#     elif i == n - 1:
-#         # top right corner
-#         connectivity_cons.append(
-#             Constraint(
-#                 name, has_connection_top_right, connectivity_pruner_top_right, con_vars
-#             )
-#         )
-#     elif i == n * (n - 1):
-#         # bottom left corner
-#         connectivity_cons.append(
-#             Constraint(
-#                 name,
-#                 has_connection_bottom_left,
-#                 connectivity_pruner_bottom_left,
-#                 con_vars,
-#             )
-#         )
-#     elif i == n * n - 1:
-#         # bottom right corner
-#         connectivity_cons.append(
-#             Constraint(
-#                 name,
-#                 has_connection_bottom_right,
-#                 connectivity_pruner_bottom_right,
-#                 con_vars,
-#             )
-#         )
-#     elif i < n - 1:
-#         # top row
-#         connectivity_cons.append(
-#             Constraint(name, has_connection_top, connectivity_pruner_top, con_vars)
-#         )
-#     elif i % n == 0:
-#         # left column
-#         connectivity_cons.append(
-#             Constraint(name, has_connection_left, connectivity_pruner_left, con_vars)
-#         )
-#     elif i % n == n - 1:
-#         # right column
-#         connectivity_cons.append(
-#             Constraint(name, has_connection_right, connectivity_pruner_right, con_vars)
-#         )
-#     elif i > n * (n - 1):
-#         # bottom row
-#         connectivity_cons.append(
-#             Constraint(
-#                 name, has_connection_bottom, connectivity_pruner_bottom, con_vars
-#             )
-#         )
-#     else:
-#         # middle
-#         connectivity_cons.append(
-#             Constraint(name, has_connection_mid, connectivity_pruner_mid, con_vars)
-#         )
 
 # create binary constraints for no blocking
 no_blocking_cons: list[Constraint] = []
@@ -156,21 +83,7 @@ csp.gac_all(solutions_gac)
 t1 = time.time()
 print(f"time: {t1 - t0}")
 
-# for i, pipe in enumerate(solutions_gac[0]):
-#     for dir in range(len(pipe)):
-#         if pipe[dir]:
-#             if dir == 0:
-#                 # up
-#                 print(f"(open-up p{i})")
-#             elif dir == 1:
-#                 # right
-#                 print(f"(open-right p{i})")
-#             elif dir == 2:
-#                 # down
-#                 print(f"(open-down p{i})")
-#             else:
-#                 # left
-#                 print(f"(open-left p{i})")
+random_rotation = random_rotate_board(solutions_gac[0])
 
 
 directory_name = f"planning/pddl/problems/{n}/"
