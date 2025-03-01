@@ -510,27 +510,32 @@ class CSP:
                         q.append(c)
         return pruned_domains
 
-    def gac_all(self, solutions: list[Assignment]) -> None:
+    def gac_all(self, solutions: list[Assignment], num_solutions: int, print_solutions: bool) -> int:
         """
         Finds all solutions to the csp using generalized arc consistency. Solutions will be stored in the solutions list that is passed in as a parameter.
 
         :params solutions: a list where the solutions will be stored
         """
         # all variables in the csp have been assigned
+        if num_solutions != -1 and len(solutions) >= num_solutions:
+            return len(solutions)
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
             if curr_assignment not in solutions:
-                print1DGrid(curr_assignment)  # type: ignore
+                
                 for con in self.cons:
                     violated = con.violated()
                     if violated:
                         raise Exception(
                             f"constraint {con.name} violated: {con.violated()}"
                         )
+                
                 solutions.append(curr_assignment)
-                print(len(solutions))
-                print()
-            return
+                if print_solutions:
+                    print1DGrid(curr_assignment)  # type: ignore
+                    print(len(solutions))
+                    print()
+            return len(solutions)
         # get an unassigned variable to assign next
         curr_var = self.unassigned_vars[0]
         # try every active assignment for the variable
@@ -550,7 +555,8 @@ class CSP:
             # this assignment will give a full solution once everything else is assigned
             # the variables will stay assigned after returning
             if not no_active_domains:
-                self.gac_all(solutions)
+                self.gac_all(solutions, num_solutions, print_solutions)
+                
 
             # dead-end (no active domains for some variable) reached, restore the active domains
             for var in pruned_domains:
@@ -559,6 +565,7 @@ class CSP:
         # if the code gets here, then none of the assignable values for the variable work.
         # unassign the variable
         self.unassign_var(curr_var)
+        return len(solutions)
 
 
 PIPE_CHAR: dict[PipeType, str] = {

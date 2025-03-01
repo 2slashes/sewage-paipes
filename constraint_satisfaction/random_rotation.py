@@ -16,10 +16,14 @@ def clockwise_rotate(pipe: PipeType, num_rotations: int) -> PipeType:
     new_pipe: PipeType = (top, right, bottom, left)
     return new_pipe
 
-def random_rotate_board(board: list[PipeType]):
-    new_board: list[PipeType] = []
-    for pipe in board:
-        num_rotations = random.randint(0, 3)
-        new_pipe = clockwise_rotate(pipe, num_rotations)
-        new_board.append(new_pipe)
-    return new_board
+def random_rotate_board(board: list[PipeType], n: int) -> list[list[PipeType]]:
+    new_boards: list[list[PipeType]] = []
+    while len(new_boards) < n:
+        new_board: list[PipeType] = []
+        for pipe in board:
+            num_rotations = random.randint(0, 3)
+            new_pipe = clockwise_rotate(pipe, num_rotations)
+            new_board.append(new_pipe)
+        if new_board not in new_boards:
+            new_boards.append(new_board)
+    return new_boards

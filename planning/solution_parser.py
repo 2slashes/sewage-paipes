@@ -23,4 +23,4 @@ for dir_name in os.listdir(root_dir):
     path = os.path.join(root_dir, dir_name)
     if os.path.isdir(path):
         if dir_name.isdigit():
-            n: int = int(dir_name)
+            n: int = int(dir_name) * int(dir_name)
