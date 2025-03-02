@@ -26,7 +26,7 @@ while not n_validated:
     print(f"Value of n validated as {n}\n")
     n_validated = True
 
-generate_pddl_str = input("Would you like to generate PDDL output files and initial/goal state files for these solutions? Y/n: ").lower()
+generate_pddl_str = input("Would you like to generate PDDL output files and initial/goal state files for these solutions? y/N: ").lower()
 should_generate_pddl = True if generate_pddl_str == 'y' or generate_pddl_str == 'yes' else False
 print()
 
@@ -59,7 +59,7 @@ while not solutions_validated:
         print("Number of solutions must be at least 1.")
         continue
     if num_solutions == -1 and should_generate_pddl:
-        warning_str = input("WARNING: This action could generate A LOT of PDDL files.\nAre you sure you want an unbounded number of solutions? Y/n: ").lower()
+        warning_str = input("WARNING: This action could generate A LOT of PDDL files.\nAre you sure you want an unbounded number of solutions? y/N: ").lower()
         cancel = False if warning_str == "y" or warning_str == "yes" else True
         if cancel:
             continue
@@ -67,7 +67,7 @@ while not solutions_validated:
     solutions_validated = True
 
 print_solutions_str = input("Would you like to print a visual representation for these solutions? Y/n: ").lower()
-should_print_solutions = True if print_solutions_str == 'y' or print_solutions_str == 'yes' else False
+should_print_solutions = False if print_solutions_str == 'n' or print_solutions_str == 'no' else True
 print()
 
 max_num_boards_generated = -1

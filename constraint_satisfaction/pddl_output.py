@@ -3,23 +3,24 @@ import os
 from random_rotation import random_rotate_board
 
 def generate_all_pddl_and_state_files(solutions: list[Assignment], num_rotations: int, n: int, num_solutions: int):
-    pddl_dir = f"planning/pddl/problems/{n}/"
+    curr_dir = os.path.dirname(__file__)
+    pddl_dir = os.path.join(curr_dir, f"../planning/pddl/problems/{n}/")
     try:
         os.makedirs(pddl_dir)
         print(f"Directory '{pddl_dir}' created successfully.")
     except FileExistsError:
-        print(f"Directory '{pddl_dir}' already exists.")
+        pass
     except PermissionError:
         print(f"Permission denied: Unable to create '{pddl_dir}'.")
     except Exception as e:
         print(f"An error occurred: {e}")
     
-    state_dir = f"planning/states/{n}/"
+    state_dir = os.path.join(curr_dir, f"../planning/states/{n}/")
     try:
         os.makedirs(state_dir)
         print(f"Directory '{state_dir}' created successfully.")
     except FileExistsError:
-        print(f"Directory '{state_dir}' already exists.")
+        pass
     except PermissionError:
         print(f"Permission denied: Unable to create '{state_dir}'.")
     except Exception as e:

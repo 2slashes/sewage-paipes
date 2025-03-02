@@ -10,16 +10,11 @@
 for dir in problems/*/; do
     dir_name="${dir%/}"
     base_name=$(basename "$dir_name")
-    echo $base_name
-    echo $dir_name
 
     # check if the directory name is an integer
     if [[ "$base_name" =~ ^[0-9]+$ ]]
     then
-        echo "Processing directory: $dir_name"
-
         # create solutions directory
-        echo $base_name
         mkdir -p "solutions/$base_name"
 
         # iterate through all files in the directory
@@ -35,8 +30,6 @@ for dir in problems/*/; do
                     solution_dir="solutions/$base_name"
                     mkdir -p "$solution_dir/"
                     solution_file="$solution_dir/solution${problem_number}"
-                    echo "Using $file as problem for fast-downward"
-                    echo "Output in $solution_file"
                     downward --alias seq-opt-merge-and-shrink --plan-file "$solution_file" --search-time-limit 30 domain.pddl "$file"
                     rm "$file"
                 fi
@@ -45,3 +38,4 @@ for dir in problems/*/; do
         rmdir "$dir_name"
     fi
 done
+rmdir problems
