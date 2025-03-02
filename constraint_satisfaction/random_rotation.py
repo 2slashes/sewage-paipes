@@ -29,8 +29,8 @@ def random_rotate_board(board: list[PipeType], num_rotations: int) -> list[list[
         new_board: list[PipeType] = []
         # generate a random rotation of each pipe in the board
         for pipe in board:
-            num_rotations = random.randint(0, 3)
-            new_pipe = clockwise_rotate(pipe, num_rotations)
+            num_rotations_pipe = random.randint(0, 3)
+            new_pipe = clockwise_rotate(pipe, num_rotations_pipe)
             new_board.append(new_pipe)
         # ensure that the random rotation of the board has not been generated already
         if new_board not in new_boards:
