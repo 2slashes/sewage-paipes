@@ -159,3 +159,4 @@ planning/pddl/solutions/
 planning/pddl/.apptainer
 .bash_history
 /planning/pddl/.planutils
+/planning/pddl/output.sas
