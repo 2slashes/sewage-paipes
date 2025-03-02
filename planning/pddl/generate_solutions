@@ -32,12 +32,12 @@ for dir in problems/*/; do
                 if [[ "$file_name" =~ ^problem([0-9]+)\.pddl$ ]]
                 then
                     problem_number="${BASH_REMATCH[1]}"
-                    solution_dir="solutions/$base_name/"
+                    solution_dir="solutions/$base_name"
                     mkdir -p "$solution_dir/$base_name/"
-                    solution_file="$solution_dir/${problem_number}.sas"
+                    solution_file="$solution_dir/solution${problem_number}"
                     echo "Using $file as problem for fast-downward"
                     echo "Output in $solution_file"
-                    downward --sas-file "$solution_file" domain.pddl "$file"
+                    downward --alias seq-opt-merge-and-shrink --plan-file "$solution_file" --search-time-limit 30 domain.pddl "$file"
                 fi
             fi
         done

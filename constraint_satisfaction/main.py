@@ -61,7 +61,7 @@ while not solutions_validated:
         print("Number of solutions must be at least 1.")
         continue
     if num_solutions == -1 and should_generate_pddl:
-        warning_str = input("WARNING: This action could generate a LOT of PDDL files.\nAre you sure you want an unbounded number of solutions? Y/n: ").lower()
+        warning_str = input("WARNING: This action could generate A LOT of PDDL files.\nAre you sure you want an unbounded number of solutions? Y/n: ").lower()
         cancel = False if warning_str == "y" or warning_str == "yes" else True
         if cancel:
             continue
@@ -163,7 +163,7 @@ if should_generate_pddl:
 
     count = 0
     for solution in solutions_gac:
-        random_rotations = random_rotate_board(solutions_gac[0], num_rotations)
+        random_rotations = random_rotate_board(solution, num_rotations)
         for rotation in random_rotations:
             pddl: str = generate_pddl(f"pipes{count}", "pipes", rotation, solution)
             with open(f"{directory_name}problem{count}.pddl", "w") as file:
