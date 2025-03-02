@@ -155,6 +155,7 @@ cython_debug/
 tests/
 planning/pddl/problems/
 planning/pddl/solutions/
+/planning/pddl/states/
 planning/pddl/.apptainer
 .bash_history
 /planning/pddl/.planutils

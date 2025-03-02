@@ -33,13 +33,16 @@ for dir in problems/*/; do
                 then
                     problem_number="${BASH_REMATCH[1]}"
                     solution_dir="solutions/$base_name"
-                    mkdir -p "$solution_dir/$base_name/"
+                    mkdir -p "$solution_dir/"
                     solution_file="$solution_dir/solution${problem_number}"
                     echo "Using $file as problem for fast-downward"
                     echo "Output in $solution_file"
                     downward --alias seq-opt-merge-and-shrink --plan-file "$solution_file" --search-time-limit 30 domain.pddl "$file"
+                    rm "$file"
+                    sudo chmod 777 "$solution_file"
                 fi
             fi
         done
+        rmdir "$dir_name"
     fi
 done

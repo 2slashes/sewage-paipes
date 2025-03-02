@@ -9,9 +9,7 @@ from pipes_constraints import (
 from pipe_typings import Assignment
 from tree import validator as tree_validator, pruner as tree_pruner
 from connected import validator as connected_validator, pruner as connected_pruner
-from random_rotation import random_rotate_board
-from pddl_output import generate_pddl
-import os
+from pddl_output import generate_all_pddl_and_state_files
 from math import ceil
 
 n: int = 0
@@ -28,7 +26,7 @@ while not n_validated:
     print(f"Value of n validated as {n}\n")
     n_validated = True
 
-generate_pddl_str = input("Would you like to generate PDDL output files for these solutions? Y/n: ").lower()
+generate_pddl_str = input("Would you like to generate PDDL output files and initial/goal state files for these solutions? Y/n: ").lower()
 should_generate_pddl = True if generate_pddl_str == 'y' or generate_pddl_str == 'yes' else False
 print()
 
@@ -148,24 +146,6 @@ csp.gac_all(solutions_gac, max_num_boards_generated, should_print_solutions)
 t1 = time.time()
 print(f"time: {t1 - t0}")
 
-# generate the PDDL files for all of the problems
+# generate the PDDL and state files for all of the problems
 if should_generate_pddl:
-    directory_name = f"planning/pddl/problems/{n}/"
-    try:
-        os.makedirs(directory_name)
-        print(f"Directory '{directory_name}' created successfully.")
-    except FileExistsError:
-        print(f"Directory '{directory_name}' already exists.")
-    except PermissionError:
-        print(f"Permission denied: Unable to create '{directory_name}'.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-    count = 0
-    for solution in solutions_gac:
-        random_rotations = random_rotate_board(solution, num_rotations)
-        for rotation in random_rotations:
-            pddl: str = generate_pddl(f"pipes{count}", "pipes", rotation, solution)
-            with open(f"{directory_name}problem{count}.pddl", "w") as file:
-                file.write(pddl)
-            count += 1
+    generate_all_pddl_and_state_files(solutions_gac, num_rotations, n, num_solutions)
