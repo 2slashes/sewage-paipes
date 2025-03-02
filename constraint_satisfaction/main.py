@@ -1,14 +1,17 @@
 import time
 from csp import Variable, Constraint, CSP, DomainGenerator
-from pipes_constraints import (
-    not_blocked_h,
+from constraints.no_blocking import (
+    not_blocked_validator_h,
+    not_blocked_validator_v,
     not_blocked_pruner_h,
     not_blocked_pruner_v,
-    not_blocked_v,
 )
 from pipe_typings import Assignment
-from tree import validator as tree_validator, pruner as tree_pruner
-from connected import validator as connected_validator, pruner as connected_pruner
+from constraints.tree import validator as tree_validator, pruner as tree_pruner
+from constraints.connected import (
+    validator as connected_validator,
+    pruner as connected_pruner,
+)
 from pddl_output import generate_all_pddl_and_state_files
 from math import ceil
 
@@ -26,8 +29,12 @@ while not n_validated:
     print(f"Value of n validated as {n}\n")
     n_validated = True
 
-generate_pddl_str = input("Would you like to generate PDDL output files and initial/goal state files for these solutions? y/N: ").lower()
-should_generate_pddl = True if generate_pddl_str == 'y' or generate_pddl_str == 'yes' else False
+generate_pddl_str = input(
+    "Would you like to generate PDDL output files and initial/goal state files for these solutions? y/N: "
+).lower()
+should_generate_pddl = (
+    True if generate_pddl_str == "y" or generate_pddl_str == "yes" else False
+)
 print()
 
 num_rotations: int = 0
@@ -46,36 +53,44 @@ if should_generate_pddl:
         print(f"Number of rotations validated as {num_rotations}\n")
         rotations_validated = True
 # max
-num_solutions = 0
+max_solutions = 0
 solutions_validated = False
 while not solutions_validated:
-    solutions_str = input("Enter the maximum number of solutions (-1 for unbounded number of solutions): ")
+    solutions_str = input(
+        "Enter the maximum number of solutions (-1 for unbounded number of solutions): "
+    )
     try:
-        num_solutions = int(solutions_str)
+        max_solutions = int(solutions_str)
     except ValueError:
         print("Value entered is not a digit.")
         continue
-    if num_solutions < 1 and num_solutions != -1:
+    if max_solutions < 1 and max_solutions != -1:
         print("Number of solutions must be at least 1.")
         continue
-    if num_solutions == -1 and should_generate_pddl:
-        warning_str = input("WARNING: This action could generate A LOT of PDDL files.\nAre you sure you want an unbounded number of solutions? y/N: ").lower()
+    if max_solutions == -1 and should_generate_pddl:
+        warning_str = input(
+            "WARNING: This action could generate a lot of PDDL and state files.\nAre you sure you want an unbounded number of solutions? y/N: "
+        ).lower()
         cancel = False if warning_str == "y" or warning_str == "yes" else True
         if cancel:
             continue
-    print(f"Number of solutions validated as {num_solutions}\n")
+    print(f"Number of solutions validated as {max_solutions}\n")
     solutions_validated = True
 
-print_solutions_str = input("Would you like to print a visual representation for these solutions? Y/n: ").lower()
-should_print_solutions = False if print_solutions_str == 'n' or print_solutions_str == 'no' else True
+print_solutions_str = input(
+    "Would you like to print a visual representation for these solutions? Y/n: "
+).lower()
+should_print_solutions = (
+    False if print_solutions_str == "n" or print_solutions_str == "no" else True
+)
 print()
 
 max_num_boards_generated = -1
-if num_solutions != -1:
+if max_solutions != -1:
     if should_generate_pddl:
-        max_num_boards_generated = ceil(num_solutions / num_rotations)
+        max_num_boards_generated = ceil(max_solutions / num_rotations)
     else:
-        max_num_boards_generated = num_solutions
+        max_num_boards_generated = max_solutions
 
 variables: list[Variable] = []
 
@@ -111,7 +126,7 @@ for i in range(n):
         scope = [left, right]
         name = f"no blocking horizontal {i * n + j, i * n + j + 1}"
         no_blocking_h.append(
-            Constraint(name, not_blocked_h, not_blocked_pruner_h, scope)
+            Constraint(name, not_blocked_validator_h, not_blocked_pruner_h, scope)
         )
 
 # vertical cons
@@ -123,7 +138,7 @@ for i in range(n - 1):
         scope = [above, below]
         name = f"no blocking vertical {i * n + j, (i + 1) * n + j}"
         no_blocking_v.append(
-            Constraint(name, not_blocked_v, not_blocked_pruner_v, scope)
+            Constraint(name, not_blocked_validator_v, not_blocked_pruner_v, scope)
         )
 
 # add cons
@@ -137,7 +152,6 @@ connected_con: Constraint = Constraint(
 )
 all_cons = no_blocking_cons + [tree_con, connected_con]
 
-
 # create csp
 csp = CSP("Sewage pAIpes", variables, all_cons)
 solutions_gac: list[Assignment] = []
@@ -148,4 +162,4 @@ print(f"time: {t1 - t0}")
 
 # generate the PDDL and state files for all of the problems
 if should_generate_pddl:
-    generate_all_pddl_and_state_files(solutions_gac, num_rotations, n, num_solutions)
+    generate_all_pddl_and_state_files(solutions_gac, num_rotations, n, max_solutions)

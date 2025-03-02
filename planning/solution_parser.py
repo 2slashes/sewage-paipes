@@ -2,6 +2,7 @@ import os
 import re
 import csv
 
+
 def parse_all():
     action_names: list[str] = [
         "rotate_pipe_up",
@@ -20,8 +21,8 @@ def parse_all():
         "rotate_pipe_left_up_right",
     ]
     curr_dir = os.path.dirname(__file__)
-    csv_dir = os.path.join(curr_dir, "../deep_learning/data/")
-    csv_file_name = os.path.join(curr_dir, "../deep_learning/data/out.csv")
+    csv_dir = os.path.join(curr_dir, "../deep-learning/data/")
+    csv_file_name = os.path.join(curr_dir, "../deep-learning/data/out.csv")
 
     try:
         os.makedirs(csv_dir)
@@ -31,7 +32,7 @@ def parse_all():
         pass
     except Exception as e:
         print(f"An error occurred: {e}")
-    
+
     solution_file_pattern = re.compile(r"^solution(\d+)$")
     action_pattern = re.compile(r"^\((\w+) (\w+)\)$")
     # iterate through all the solution directories and parse all the solutions
@@ -63,15 +64,21 @@ def parse_all():
                         problem_num = int(match.group(1))
                         solution_file_path = os.path.join(dir_name, solution_file)
                         state_file_path = os.path.join(state_dir, f"state{problem_num}")
-                        with open(solution_file_path, "r", encoding="utf-8") as solution_file, open(state_file_path, "r", encoding="utf-8") as state_file:
+                        with open(
+                            solution_file_path, "r", encoding="utf-8"
+                        ) as solution_file, open(
+                            state_file_path, "r", encoding="utf-8"
+                        ) as state_file:
                             # open a writer for the csv file and label columns
-                            
+
                             # get the initial state from file2
                             state: str = state_file.readline().strip()
                             for line in solution_file:
-                                line = line.strip()  # Remove leading/trailing whitespace
+                                line = (
+                                    line.strip()
+                                )  # Remove leading/trailing whitespace
                                 match = action_pattern.match(line)
-                                
+
                                 if match:
                                     action, obj = match.groups()
                                     if action in action_names and obj in object_names:
@@ -83,11 +90,13 @@ def parse_all():
                                         # apply the rotation to the state to get the next state
                                         state = pipe_rotate_binary(object_num, state)
                                     else:
-                                        raise Exception("action or object doesn't match")
+                                        raise Exception(
+                                            "action or object doesn't match"
+                                        )
                             goal_state: str = state_file.readline().strip()
                             if goal_state != state:
                                 raise Exception("goal is wrong")
-                            
+
                         try:
                             os.remove(solution_file_path)
                         except FileNotFoundError:
@@ -101,16 +110,15 @@ def parse_all():
     os.rmdir(solutions_dir)
     os.rmdir(states_dir)
     print("parsed data successfully")
-            
-                                
-                                
+
+
 def pipe_rotate_binary(pipe: int, board: str):
     """
-    Takes a binary representation of a board of pipes, and a pipe to rotate. Outputs a binary representation of the board after rotating the pipe.
+    Takes a binary representation of a board of pipes as a string, and a pipe to rotate. Outputs a binary representation of the board after rotating the pipe.
 
     :params pipe: The pipe to rotate
-    :params board: Binary representation of the board
-    
+    :params board: Binary representation of the board as a string
+
     """
     # each pipe has 4 values associated to it, so pipe n starts at index 4 * n
     start_index = 4 * pipe
@@ -120,7 +128,9 @@ def pipe_rotate_binary(pipe: int, board: str):
     left = board[start_index + 3]
 
     # rotate clockwise
-    new_board = board[:start_index] + left + up + right + down + board[start_index + 4:]
+    new_board = (
+        board[:start_index] + left + up + right + down + board[start_index + 4 :]
+    )
 
     return new_board
 

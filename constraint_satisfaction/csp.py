@@ -1,10 +1,12 @@
 from pipe_typings import *
-from typing import Optional, Callable, Literal
-from math import sqrt
+from typing import Optional, Callable
 from pipes_utils import *
+from print_pipes import print_pipes_grid
 
 
 class DomainGenerator:
+    # all the possible domains for pipes in the pipes puzzle
+    # (True, True, True, True) and (False, False, False, False) are omitted - they represent all connections or no connections, which are immune to rotations.
     all_domain: list[PipeType] = [
         (True, True, True, False),
         (True, True, False, True),
@@ -56,6 +58,12 @@ class DomainGenerator:
 class Variable:
     """
     A class representing a variable for a pipe at each location in the CSP.
+
+    Attributes:
+        location: int used to identify the object
+        domain: values that the variable can take on
+        active_domain: values that the variable can take on without backtracking
+        assignment: current value of the variable
     """
 
     def __init__(
@@ -65,9 +73,9 @@ class Variable:
         assignment: Optional[PipeType] = None,
     ):
         """
-        Initialize a Variable with a name, domain, and an optional assignment.
+        Initialize a Variable with a location, domain, and an optional assignment.
 
-        :param name: A tuple representing the name of the variable.
+        :param location: An int used to identify the Variable.
         :param domain: A list of PipeType objects representing the domain of the variable.
         :param assignment: An optional PipeType object representing the current assignment.
         """
@@ -143,6 +151,12 @@ class Variable:
 class Constraint:
     """
     A class representing a constraint for a CSP.
+
+    Attributes:
+        name: name of the constraint
+        _validator: function that validates whether the assignment of variables in this constraint satisfies the constraint
+        _pruner: function that determines, based on the currently assigned Variable objects in the constraint, what values can be pruned from the active domain of the unassigned Variable objects in the constraint
+        scope: list of Variable objects that are impacted by this constraint
     """
 
     def __init__(
@@ -153,7 +167,7 @@ class Constraint:
         scope: list[Variable],
     ):
         """
-        Initialize a Constraint with a name, satisfaction function, and scope.
+        Initialize a Constraint with a name, validation function, pruning function, and scope.
 
         :param name: A string representing the name of the constraint.
         :param validator: A callable function that takes a list of PipeTypes and returns a list of active domains for each variable in scope
@@ -203,7 +217,7 @@ class Constraint:
         """
         if not self.check_fully_assigned():
             raise Exception(
-                "Tried to check if a constraint was violated with unassigned variables"
+                "Tried to check if a constraint with unassigned variables was violated"
             )
         pipes: list[PipeType] = []
         for var in self.scope:
@@ -226,27 +240,45 @@ class Constraint:
 
 class CSP:
     """
-    csp
+    A representation of a constraint satisfaction problem
+
+    Attributes:
+        name: String to identify the csp
+        vars: list of Variable objects that are within the csp
+        cons: list of Constraint objects that act on the variables within the csp
+        vars_to_cons: mapping of Variables to the Constraints that they are affected by
+        unassigned_vars: list of Variables that are currently unassigned
     """
 
     def __init__(self, name: str, vars: list[Variable], cons: list[Constraint]):
+        """
+        Initialize a CSP with a name, Variables, and Constraints.
+
+        :param name: A string representing the name of the CSP.
+        :param vars: list of Variable objects within the csp
+        :param cons: list of Constraint objects that the Variables in the csp are affected by
+        """
         self.name = name
         self.vars: list[Variable] = []
         self.cons: list[Constraint] = []
         self.vars_to_cons: dict[Variable, list[Constraint]] = {}
         self.unassigned_vars: list[Variable] = []
 
+        # add the variables
         for var in vars:
             self.add_var(var)
 
+        # add the constraints
         for con in cons:
             self.add_con(con)
 
     def add_var(self, var: Variable):
-        if type(var) is not Variable:
-            raise Exception(
-                "Tried to add a non-variable object as a variable in", self.name
-            )
+        """
+        Adds a variable object to the csp.
+
+        :params var: Variable object to add
+        """
+        # ensure that the variable is not already in the csp
         if var not in self.vars:
             self.vars.append(var)
             self.vars_to_cons[var] = []
@@ -254,27 +286,45 @@ class CSP:
                 self.unassigned_vars.append(var)
 
     def add_con(self, con: Constraint):
-        if type(con) is not Constraint:
-            raise Exception(
-                "Tried to add a non-constraint object as a constraint in", self.name
-            )
+        """
+        Adds a constraint object to the csp. Ensures that all Variables in the scope of the constraint are in the csp too.
 
+        :params con: Constraint object to add
+        """
+        # ensure that the constraint has not yet been added
         if con not in self.cons:
+            # ensure that all Variables that the constraint operates on have been added to the CSP
             for var in con.scope:
                 if var not in self.vars_to_cons:
                     raise Exception(
                         "Trying to add constraint with unknown variable to", self.name
                     )
+                # Map the variables in this constraint to the constraint
                 self.vars_to_cons[var].append(con)
             self.cons.append(con)
 
     def get_cons(self):
+        """
+        Get a copy of the constraints in this csp
+
+        :returns: list of constraints in the csp
+        """
         return self.cons.copy()
 
     def get_vars(self):
+        """
+        Get a copy of the variables in this csp
+
+        :returns: list of variables in the csp
+        """
         return self.vars.copy()
 
     def get_cons_with_var(self, var: Variable):
+        """
+        Get a mapping of variables to constraints from this csp
+
+        :returns: map of variables to constraints
+        """
         return self.vars_to_cons[var].copy()
 
     def assign_var(self, var: Variable, assignment: PipeType) -> bool:
@@ -321,17 +371,21 @@ class CSP:
 
     def backtrack(self, solutions: list[Assignment]) -> None:
         """
-        Solves the csp using backtracking
+        Recursively finds all solutions to the csp using backtracking search.
+
+        :params solutions: list of solutions that have been found so far
         """
         if not self.unassigned_vars:
+            # if all the variables have been assigned, ensure that no constraint is violated, then add the solution to the list of solutions
             curr_assignment = self.get_assignment()
             if curr_assignment not in solutions:
                 for con in self.cons:
                     violated = con.violated()
                     if violated:
                         return
-                print1DGrid(curr_assignment)  # type: ignore
                 solutions.append(curr_assignment)
+
+                print_pipes_grid(curr_assignment)
                 print(len(solutions))
                 print()
             return
@@ -342,6 +396,7 @@ class CSP:
         for assignment in curr_var.active_domain:
             self.assign_var(curr_var, assignment)
 
+            # check if the newly assigned variable violates any constraints
             violated = False
             for con in self.get_cons_with_var(curr_var):
                 if con.check_fully_assigned():
@@ -349,8 +404,10 @@ class CSP:
                         violated = True
                         break
 
+            # continue backtracking search if nothing has been violated
             if not violated:
                 self.backtrack(solutions)
+            # once all solutions have been found with all assignments for the current variable, unassign the variable and go back to the last variable
             self.unassign_var(curr_var)
 
     def fc_one(self) -> bool:
@@ -362,7 +419,7 @@ class CSP:
         # if there are no unassigned variables in the csp and it's not already in solutions, then this is a new solution
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
-            print1DGrid(curr_assignment)  # type: ignore
+            print_pipes_grid(curr_assignment)
             return True
 
         # get an unassigned variable to assign next
@@ -387,36 +444,47 @@ class CSP:
                     no_active_domains = True
                     break
 
-            # no dead-ends, keep going, adding to solutions if everything is assigned
             if not no_active_domains and self.fc_one():
+                # solution found, return True
                 return True
 
-            # restore the active domains and try another variable
+            # solution not found, restore the active domains and try another variable
             for var in pruned_domains:
                 var.active_domain += pruned_domains[var]
+        #  solution could not be found, return False
         self.unassign_var(curr_var)
         return False
 
-    def fc_all(self, solutions: list[Assignment]) -> None:
+    def fc_all(
+        self, solutions: list[Assignment], num_solutions: int, print_solutions: bool
+    ) -> int:
         """
-        Solves the csp using forward checking. Solution will be stored in the variable objects related to this csp.
+        Finds all solutions to the csp using forward checking. Solutions will be accumulated in the list passed into the function.
 
-        :returns: True if a solution was found, false if not.
+        :params solutions: list where solutions are stored.
+        :params num_solutions: maximum number of solutions to generate
+        :params print_solutions: whether a visual representation of each solution should be printed or not
+        :returns: the number of solutions generated
         """
-        # if there are no unassigned variables in the csp and it's not already in solutions, then this is a new solution
+        # check if enough solutions have been generated
+        if num_solutions != -1 and len(solutions) >= num_solutions:
+            return len(solutions)
+        # check if all variables in the csp have been assigned
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
             if curr_assignment not in solutions:
-                # print1DGrid(curr_assignment) # type: ignore
+                # make sure the solution doesn't violate any constraints
                 for con in self.cons:
                     violated = con.violated()
                     if violated:
                         print(f"constraint {con.name} violated: {con.violated()}")
                         raise Exception("chyme")
                 solutions.append(curr_assignment)
-                # print(len(solutions))
-                # print()
-            return
+                if print_solutions:
+                    print_pipes_grid(curr_assignment)
+                    print(len(solutions))
+                    print()
+            return len(solutions)
 
         # get an unassigned variable to assign next
         curr_var = self.unassigned_vars[0]
@@ -440,14 +508,16 @@ class CSP:
                     no_active_domains = True
                     break
 
-            # no dead-ends, keep going, adding to solutions if everything is assigned
+            # continue adding to solutions. Don't return so that all solutions are found.
             if not no_active_domains:
-                self.fc_all(solutions)
+                self.fc_all(solutions, num_solutions, print_solutions)
 
             # restore the active domains and try another variable
             for var in pruned_domains:
                 var.active_domain += pruned_domains[var]
+        # no solutions were found, unassign the variable and go back to the last variable
         self.unassign_var(curr_var)
+        return len(solutions)
 
     def gac_one(self) -> bool:
         """
@@ -458,7 +528,7 @@ class CSP:
         # all variables in the csp have been assigned
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
-            print1DGrid(curr_assignment)  # type: ignore
+            print_pipes_grid(curr_assignment)
             return True
         # get an unassigned variable to assign next
         curr_var = self.unassigned_vars[0]
@@ -510,29 +580,35 @@ class CSP:
                         q.append(c)
         return pruned_domains
 
-    def gac_all(self, solutions: list[Assignment], num_solutions: int, print_solutions: bool) -> int:
+    def gac_all(
+        self, solutions: list[Assignment], max_solutions: int, print_solutions: bool
+    ) -> int:
         """
         Finds all solutions to the csp using generalized arc consistency. Solutions will be stored in the solutions list that is passed in as a parameter.
 
         :params solutions: a list where the solutions will be stored
+        :params max_solutions: the maximum number of solutions to generate
+        :params print_solutions: whether to print a visual representation of the solutions or not
+        :returns: the number of solutions generated
         """
-        # all variables in the csp have been assigned
-        if num_solutions != -1 and len(solutions) >= num_solutions:
+        # check if enough solutions have been generated
+        if max_solutions != -1 and len(solutions) >= max_solutions:
             return len(solutions)
+        # check if all variables in the csp have been assigned
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
             if curr_assignment not in solutions:
-                
+
                 for con in self.cons:
                     violated = con.violated()
                     if violated:
                         raise Exception(
                             f"constraint {con.name} violated: {con.violated()}"
                         )
-                
+
                 solutions.append(curr_assignment)
                 if print_solutions:
-                    print1DGrid(curr_assignment)  # type: ignore
+                    print_pipes_grid(curr_assignment)
                     print(len(solutions))
                     print()
             return len(solutions)
@@ -555,8 +631,7 @@ class CSP:
             # this assignment will give a full solution once everything else is assigned
             # the variables will stay assigned after returning
             if not no_active_domains:
-                self.gac_all(solutions, num_solutions, print_solutions)
-                
+                self.gac_all(solutions, max_solutions, print_solutions)
 
             # dead-end (no active domains for some variable) reached, restore the active domains
             for var in pruned_domains:
@@ -566,65 +641,3 @@ class CSP:
         # unassign the variable
         self.unassign_var(curr_var)
         return len(solutions)
-
-
-PIPE_CHAR: dict[PipeType, str] = {
-    (True, False, False, False): "╵",  # Open at the top
-    (False, True, False, False): "╶",  # Open at the right
-    (False, False, True, False): "╷",  # Open at the bottom
-    (False, False, False, True): "╴",  # Open at the left
-    (True, True, False, False): "└",  # Elbow (bottom-left)
-    (True, False, True, False): "│",  # Vertical pipe
-    (True, False, False, True): "┘",  # Elbow (bottom-right)
-    (False, True, True, False): "┌",  # Elbow (top-left)
-    (False, True, False, True): "─",  # Horizontal pipe
-    (False, False, True, True): "┐",  # Elbow (top-right)
-    (True, True, True, False): "├",  # T-junction (left, down, up)
-    (True, True, False, True): "┴",  # T-junction (left, right, down)
-    (True, False, True, True): "┤",  # T-junction (right, down, up)
-    (False, True, True, True): "┬",  # T-junction (left, right, up)
-}
-PipeName = Literal[
-    "Up",
-    "Right",
-    "Down",
-    "Left",
-    "UpRight",
-    "UpDown",
-    "UpLeft",
-    "RightDown",
-    "RightLeft",
-    "DownLeft",
-    "UpRightDown",
-    "UpRightLeft",
-    "UpDownLeft",
-    "RightDownLeft",
-]
-PIPE: dict[PipeName, PipeType] = {
-    "Up": (True, False, False, False),
-    "Right": (False, True, False, False),
-    "Down": (False, False, True, False),
-    "Left": (False, False, False, True),
-    "UpRight": (True, True, False, False),
-    "UpDown": (True, False, True, False),
-    "UpLeft": (True, False, False, True),
-    "RightDown": (False, True, True, False),
-    "RightLeft": (False, True, False, True),
-    "DownLeft": (False, False, True, True),
-    "UpRightDown": (True, True, True, False),
-    "UpRightLeft": (True, True, False, True),
-    "UpDownLeft": (True, False, True, True),
-    "RightDownLeft": (False, True, True, True),
-}
-
-
-def print1DGrid(pipes: list[Optional[PipeType]]) -> None:
-    n = int(sqrt(len(pipes)))
-    for i in range(len(pipes)):
-        pipe = pipes[i]
-        if pipe is None:
-            print("•", end="")
-        else:
-            print(PIPE_CHAR[pipe], end="")
-        if i % n == n - 1:
-            print()
