@@ -52,6 +52,15 @@ if should_generate_pddl:
             continue
         print(f"Number of rotations validated as {num_rotations}\n")
         rotations_validated = True
+
+random_order_str = input(
+    "Would you like the order that solutions are generated in to be more random? y/N: "
+).lower()
+randomize_order = (
+    True if random_order_str == "y" or random_order_str == "yes" else False
+)
+print()
+
 # max
 max_solutions = 0
 solutions_validated = False
@@ -156,7 +165,7 @@ all_cons = no_blocking_cons + [tree_con, connected_con]
 csp = CSP("Sewage pAIpes", variables, all_cons)
 solutions_gac: list[Assignment] = []
 t0 = time.time()
-csp.gac_all(solutions_gac, max_num_boards_generated, should_print_solutions)
+csp.gac_all(solutions_gac, max_num_boards_generated, should_print_solutions, randomize_order)
 t1 = time.time()
 print(f"time: {t1 - t0}")
 

@@ -1,6 +1,8 @@
-from pipe_typings import *
+from math import sqrt
+import random
+from pipes_utils import find_adj
+from pipe_typings import PipeType, Assignment
 from typing import Optional, Callable
-from pipes_utils import *
 from print_pipes import print_pipes_grid
 
 
@@ -262,6 +264,7 @@ class CSP:
         self.vars: list[Variable] = []
         self.cons: list[Constraint] = []
         self.vars_to_cons: dict[Variable, list[Constraint]] = {}
+        self.assigned_vars: list[Variable] = []
         self.unassigned_vars: list[Variable] = []
 
         # add the variables
@@ -284,6 +287,8 @@ class CSP:
             self.vars_to_cons[var] = []
             if var.assignment is None:
                 self.unassigned_vars.append(var)
+            else:
+                self.assigned_vars.append(var)
 
     def add_con(self, con: Constraint):
         """
@@ -337,6 +342,7 @@ class CSP:
         """
         if var.assign(assignment):
             self.unassigned_vars.remove(var)
+            self.assigned_vars.append(var)
             return True
         return False
 
@@ -349,6 +355,7 @@ class CSP:
         """
         if var.unassign():
             self.unassigned_vars.append(var)
+            self.assigned_vars.remove(var)
             return True
         return False
 
@@ -560,28 +567,12 @@ class CSP:
         self.unassign_var(curr_var)
         return False
 
-    def ac3(self, q: list[Constraint]) -> dict[Variable, list[PipeType]]:
-        pruned_domains: dict[Variable, list[PipeType]] = {}
-        while len(q):
-            # get the variables pruned when checking for satisfying tuples with the first constraint
-            cur_con: Constraint = q.pop(0)
-            pruned: dict[Variable, list[PipeType]] = cur_con.prune()
-            for var in pruned:
-                if var in pruned_domains:
-                    pruned_domains[var] += pruned[var]
-                else:
-                    pruned_domains[var] = pruned[var]
-                if not len(var.get_active_domain()):
-                    # the active domain of a variable is empty, no need to bother computing any more for this assignment
-                    return pruned_domains
-                cons_to_add = self.get_cons_with_var(var)
-                for c in cons_to_add:
-                    if c not in q:
-                        q.append(c)
-        return pruned_domains
-
     def gac_all(
-        self, solutions: list[Assignment], max_solutions: int, print_solutions: bool
+        self,
+        solutions: list[Assignment],
+        max_solutions: int,
+        print_solutions: bool,
+        randomize_order: bool,
     ) -> int:
         """
         Finds all solutions to the csp using generalized arc consistency. Solutions will be stored in the solutions list that is passed in as a parameter.
@@ -612,10 +603,17 @@ class CSP:
                     print(len(solutions))
                     print()
             return len(solutions)
-        # get an unassigned variable to assign next
-        curr_var = self.unassigned_vars[0]
+        
+        # get an unassigned variable to assign next using manhattan distance heuristic
+        curr_var = self.manhattan_dist_to_connection(randomize_order)
+
+        # if the order should be randomized, shuffle the active domain such that assignments are chosen in a random order
+        active_domain = curr_var.active_domain
+        if randomize_order:
+            random.shuffle(active_domain)
+
         # try every active assignment for the variable
-        for assignment in curr_var.active_domain:
+        for assignment in active_domain:
             # print(f"assigning value {assignment} to variable {curr_var}")
             self.unassign_var(curr_var)
             self.assign_var(curr_var, assignment)
@@ -631,7 +629,7 @@ class CSP:
             # this assignment will give a full solution once everything else is assigned
             # the variables will stay assigned after returning
             if not no_active_domains:
-                self.gac_all(solutions, max_solutions, print_solutions)
+                self.gac_all(solutions, max_solutions, print_solutions, randomize_order)
 
             # dead-end (no active domains for some variable) reached, restore the active domains
             for var in pruned_domains:
@@ -641,3 +639,90 @@ class CSP:
         # unassign the variable
         self.unassign_var(curr_var)
         return len(solutions)
+
+    def ac3(self, q: list[Constraint]) -> dict[Variable, list[PipeType]]:
+        pruned_domains: dict[Variable, list[PipeType]] = {}
+        while len(q):
+            # get the variables pruned when checking for satisfying tuples with the first constraint
+            cur_con: Constraint = q.pop(0)
+            pruned: dict[Variable, list[PipeType]] = cur_con.prune()
+            for var in pruned:
+                if var in pruned_domains:
+                    pruned_domains[var] += pruned[var]
+                else:
+                    pruned_domains[var] = pruned[var]
+                if not len(var.get_active_domain()):
+                    # the active domain of a variable is empty, no need to bother computing any more for this assignment
+                    return pruned_domains
+                cons_to_add = self.get_cons_with_var(var)
+                for c in cons_to_add:
+                    if c not in q:
+                        q.append(c)
+        return pruned_domains
+    
+    def manhattan_dist_to_connection(self, randomize_order: bool) -> Variable:
+        """
+        Orders a list of unassigned pipes variables in order of which one is closest to an opening of an assigned variable
+        """
+        n = int(sqrt(len(self.assigned_vars) + len(self.unassigned_vars)))
+        # get locations and assignments of assigned variables
+        loc_to_pipe: dict[int, PipeType] = {}
+        for var in self.assigned_vars:
+            pipe = var.get_assignment()
+            assert pipe is not None
+            loc_to_pipe[var.location] = pipe
+
+        unassigned_locs: list[int] = []
+        loc_to_unassigned_var: dict[int, Variable] = {}
+        for var in self.unassigned_vars:
+            unassigned_locs.append(var.location)
+            loc_to_unassigned_var[var.location] = var
+
+        direct_connections: set[int] = set()
+
+        # get assignments from each assigned pipe
+        for loc in loc_to_pipe:
+            # get adjacent indices
+            (up, right, down, left) = find_adj(loc, n)
+            pipe_up: Optional[PipeType] = None if up == -1 or up not in loc_to_pipe else loc_to_pipe[up]
+            pipe_right: Optional[PipeType] = None if right == -1 or right not in loc_to_pipe else loc_to_pipe[right]
+            pipe_down: Optional[PipeType] = None if down == -1 or down not in loc_to_pipe else loc_to_pipe[down]
+            pipe_left: Optional[PipeType] = None if left == -1 or left not in loc_to_pipe else loc_to_pipe[left]
+
+            # check if there is an unassigned pipe in the adjacent spaces
+            # if there isn't, then that space is a direct connection, meaning that it is distance 0 from a connection to an assigned pipe
+            if up != -1 and pipe_up is None:
+                direct_connections.add(up)
+            if right != -1 and pipe_right is None:
+                direct_connections.add(right)
+            if down != -1 and pipe_down is None:
+                direct_connections.add(down)
+            if left != -1 and pipe_left is None:
+                direct_connections.add(left)
+        
+        manhattan_dist: dict[int, list[int]] = {}
+        lowest_dist = 2 * n
+        # iterate through unassigned locations, for each one find the lowest manhattan distance
+        for loc in unassigned_locs:
+            min_dist = 2 * n
+            for connection in direct_connections:
+                dist_x = abs((loc % n) - (connection % n))
+                dist_y = abs((loc // n) - (connection // n))
+
+                min_dist = min(min_dist, dist_x + dist_y)
+                
+            if min_dist in manhattan_dist:
+                manhattan_dist[min_dist].append(loc)
+            else:
+                manhattan_dist[min_dist] = [loc]
+            lowest_dist = min(min_dist, lowest_dist)
+            if min_dist == 0:
+                break
+
+        loc_to_return = 0
+        if randomize_order:
+            loc_to_return = random.randint(0, len(manhattan_dist[lowest_dist]) - 1)
+
+        
+
+        return loc_to_unassigned_var[manhattan_dist[lowest_dist][loc_to_return]]

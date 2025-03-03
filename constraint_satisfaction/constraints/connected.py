@@ -4,6 +4,7 @@ from csp import Variable
 from math import sqrt
 from pipes_utils import find_adj, check_connections
 
+
 def validator(pipes: list[PipeType]) -> bool:
     """
     Ensures that everything is connected
@@ -38,19 +39,6 @@ def dft(pipes: list[PipeType], loc: int, visited: list[int]) -> None:
             dft(pipes, adj_vals[i], visited)
 
 
-# def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
-#     pseudo_assignment = pseudo_assign(variables)
-#     can_be_connected = validator(pseudo_assignment)
-#     pruned: dict[Variable, list[PipeType]] = {}
-
-#     if not can_be_connected:
-#         for var in variables:
-#             if var.get_assignment() is None:
-#                 pruned = {var: var.get_active_domain()}
-#                 var.prune(var.get_active_domain())
-#                 break
-#     return pruned
-
 def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
     pruned: dict[Variable, list[PipeType]] = {}
     pseudo_assignment = pseudo_assign(variables)
@@ -67,6 +55,7 @@ def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
         for i in range(len(pseudo_assignment)):
             find_isolated_path(variables, pseudo_assignment, i, -1, pruned)
     return pruned
+
 
 def pseudo_assign(variables: list[Variable]) -> list[PipeType]:
     """
@@ -98,7 +87,14 @@ def pseudo_assign(variables: list[Variable]) -> list[PipeType]:
 
     return pseudo_assignment
 
-def find_isolated_path(variables : list[Variable], pseudo_assignment: list[PipeType], i: int, last_dir: int, pruned: dict[Variable, list[PipeType]]):
+
+def find_isolated_path(
+    variables: list[Variable],
+    pseudo_assignment: list[PipeType],
+    i: int,
+    last_dir: int,
+    pruned: dict[Variable, list[PipeType]],
+):
     main_pipe = pseudo_assignment[i]
     main_var = variables[i]
     adj_index = find_adj(i, int(sqrt(len(pseudo_assignment))))
@@ -126,11 +122,19 @@ def find_isolated_path(variables : list[Variable], pseudo_assignment: list[PipeT
         if main_var.get_assignment() is None:
             active_domain = main_var.get_active_domain()
             for assignment in active_domain:
-                if not assignment[cur_dir] or (last_dir != -1 and not assignment[last_dir]):
+                if not assignment[cur_dir] or (
+                    last_dir != -1 and not assignment[last_dir]
+                ):
                     to_prune.append(assignment)
                     if main_var in pruned:
                         pruned[main_var].append(assignment)
                     else:
                         pruned[main_var] = [assignment]
             main_var.prune(to_prune)
-        find_isolated_path(variables, pseudo_assignment, adj_index[path_dir], (path_dir + 2) % 4, pruned)
+        find_isolated_path(
+            variables,
+            pseudo_assignment,
+            adj_index[path_dir],
+            (path_dir + 2) % 4,
+            pruned,
+        )
