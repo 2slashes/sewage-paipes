@@ -376,7 +376,7 @@ class CSP:
 
         return assignment
 
-    def backtrack(self, solutions: list[Assignment]) -> None:
+    def bt_all(self, solutions: list[Assignment]) -> None:
         """
         Recursively finds all solutions to the csp using backtracking search.
 
@@ -413,7 +413,7 @@ class CSP:
 
             # continue backtracking search if nothing has been violated
             if not violated:
-                self.backtrack(solutions)
+                self.bt_all(solutions)
             # once all solutions have been found with all assignments for the current variable, unassign the variable and go back to the last variable
             self.unassign_var(curr_var)
 
@@ -662,7 +662,11 @@ class CSP:
     
     def manhattan_dist_to_connection(self, randomize_order: bool) -> Variable:
         """
-        Orders a list of unassigned pipes variables in order of which one is closest to an opening of an assigned variable
+        A heuristic for selecting which Variable to assign next that is specific to the Pipes puzzle. Determines which pipes are closest to the empty grid spaces that form half-connections with the currently assigned pipes using the Manhattan distance. One of the closest pipes (optionally a random selection from the closest ones) is selected and returned.
+        The minimum closest distance of any unassigned pipe to a location with a half-connection should always be 0 as long as there is at least one assigned pipe. If there are no assigned pipes, there are no half-connections and therefore the minimum distance to a half-connection is unimportant, but should be considered to be the same across all Variable objects. This means that, in the case that no variable have been assigned, the heuristic will still return a random variable object to assign if a random order is desired.
+
+        :params randomize_order: whether the pipe selected should be randomly chosen from the closest pipes to half-connections with
+        :returns: a Variable object to assign next
         """
         n = int(sqrt(len(self.assigned_vars) + len(self.unassigned_vars)))
         # get locations and assignments of assigned variables
