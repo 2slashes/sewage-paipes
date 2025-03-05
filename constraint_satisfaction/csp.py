@@ -48,11 +48,11 @@ class DomainGenerator:
         domain = DomainGenerator.all_domain.copy()
         if top:
             domain = [pipe for pipe in domain if not pipe[0]]
-        elif bottom:
+        if bottom:
             domain = [pipe for pipe in domain if not pipe[2]]
         if right:
             domain = [pipe for pipe in domain if not pipe[1]]
-        elif left:
+        if left:
             domain = [pipe for pipe in domain if not pipe[3]]
         return domain
 
@@ -458,34 +458,42 @@ class CSP:
             # solution not found, restore the active domains and try another variable
             for var in pruned_domains:
                 var.active_domain += pruned_domains[var]
-        #  solution could not be found, return False
+        # if the code gets here, then none of the assignable values for the variable work.
+        # return False to indicate that the csp is unsolvable from this state of assignments.
         self.unassign_var(curr_var)
         return False
 
     def fc_all(
-        self, solutions: list[Assignment], num_solutions: int, print_solutions: bool
+        self,
+        solutions: list[Assignment],
+        max_solutions: int = -1,
+        print_solutions: bool = False,
+        randomize_order: bool = False,
     ) -> int:
         """
-        Finds all solutions to the csp using forward checking. Solutions will be accumulated in the list passed into the function.
+        Finds all solutions to the csp using forward checking. Solutions will be stored in the solutions list that is passed in as a parameter.
 
-        :params solutions: list where solutions are stored.
-        :params num_solutions: maximum number of solutions to generate
-        :params print_solutions: whether a visual representation of each solution should be printed or not
+        :params solutions: a list where the solutions will be stored
+        :params max_solutions: the maximum number of solutions to generate
+        :params print_solutions: whether to print a visual representation of the solutions or not
+        :params randomize_order: whether to make the order that solutions are generated in more random
         :returns: the number of solutions generated
         """
         # check if enough solutions have been generated
-        if num_solutions != -1 and len(solutions) >= num_solutions:
+        if max_solutions != -1 and len(solutions) >= max_solutions:
             return len(solutions)
         # check if all variables in the csp have been assigned
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
             if curr_assignment not in solutions:
-                # make sure the solution doesn't violate any constraints
+
                 for con in self.cons:
                     violated = con.violated()
                     if violated:
-                        print(f"constraint {con.name} violated: {con.violated()}")
-                        raise Exception("chyme")
+                        raise Exception(
+                            f"constraint {con.name} violated: {con.violated()}"
+                        )
+
                 solutions.append(curr_assignment)
                 if print_solutions:
                     print_pipes_grid(curr_assignment)
@@ -493,10 +501,16 @@ class CSP:
                     print()
             return len(solutions)
 
-        # get an unassigned variable to assign next
-        curr_var = self.unassigned_vars[0]
+        # get an unassigned variable to assign next using manhattan distance heuristic
+        curr_var = self.manhattan_dist_to_connection(randomize_order)
+
+        # if the order should be randomized, shuffle the active domain such that assignments are chosen in a random order
+        active_domain = curr_var.active_domain
+        if randomize_order:
+            random.shuffle(active_domain)
+
         # try every active assignment for the variable
-        for assignment in curr_var.active_domain:
+        for assignment in active_domain:
             self.unassign_var(curr_var)
             self.assign_var(curr_var, assignment)
 
@@ -517,12 +531,13 @@ class CSP:
 
             # continue adding to solutions. Don't return so that all solutions are found.
             if not no_active_domains:
-                self.fc_all(solutions, num_solutions, print_solutions)
+                self.fc_all(solutions, max_solutions, print_solutions)
 
             # restore the active domains and try another variable
             for var in pruned_domains:
                 var.active_domain += pruned_domains[var]
-        # no solutions were found, unassign the variable and go back to the last variable
+        # if the code gets here, then all solutions for all assignments of this variable have been found.
+        # Backtrack and try another assignment for a variable that was assigned earlier.
         self.unassign_var(curr_var)
         return len(solutions)
 
@@ -563,16 +578,16 @@ class CSP:
                 var.active_domain += pruned_domains[var]
 
         # if the code gets here, then none of the assignable values for the variable work.
-        # unassign the variable and return false to indicate that the csp is unsolvable
+        # return False to indicate that the csp is unsolvable from this state of assignments.
         self.unassign_var(curr_var)
         return False
 
     def gac_all(
         self,
         solutions: list[Assignment],
-        max_solutions: int,
-        print_solutions: bool,
-        randomize_order: bool,
+        max_solutions: int = -1,
+        print_solutions: bool = False,
+        randomize_order: bool = False,
     ) -> int:
         """
         Finds all solutions to the csp using generalized arc consistency. Solutions will be stored in the solutions list that is passed in as a parameter.
@@ -580,6 +595,7 @@ class CSP:
         :params solutions: a list where the solutions will be stored
         :params max_solutions: the maximum number of solutions to generate
         :params print_solutions: whether to print a visual representation of the solutions or not
+        :params randomize_order: whether to make the order that solutions are generated in more random
         :returns: the number of solutions generated
         """
         # check if enough solutions have been generated
@@ -603,7 +619,7 @@ class CSP:
                     print(len(solutions))
                     print()
             return len(solutions)
-        
+
         # get an unassigned variable to assign next using manhattan distance heuristic
         curr_var = self.manhattan_dist_to_connection(randomize_order)
 
@@ -635,8 +651,8 @@ class CSP:
             for var in pruned_domains:
                 var.active_domain += pruned_domains[var]
 
-        # if the code gets here, then none of the assignable values for the variable work.
-        # unassign the variable
+        # if the code gets here, then all solutions for all assignments of this variable have been found.
+        # Backtrack and try another assignment for a variable that was assigned earlier.
         self.unassign_var(curr_var)
         return len(solutions)
 
@@ -659,7 +675,7 @@ class CSP:
                     if c not in q:
                         q.append(c)
         return pruned_domains
-    
+
     def manhattan_dist_to_connection(self, randomize_order: bool) -> Variable:
         """
         A heuristic for selecting which Variable to assign next that is specific to the Pipes puzzle. Determines which pipes are closest to the empty grid spaces that form half-connections with the currently assigned pipes using the Manhattan distance. One of the closest pipes (optionally a random selection from the closest ones) is selected and returned.
@@ -688,10 +704,18 @@ class CSP:
         for loc in loc_to_pipe:
             # get adjacent indices
             (up, right, down, left) = find_adj(loc, n)
-            pipe_up: Optional[PipeType] = None if up == -1 or up not in loc_to_pipe else loc_to_pipe[up]
-            pipe_right: Optional[PipeType] = None if right == -1 or right not in loc_to_pipe else loc_to_pipe[right]
-            pipe_down: Optional[PipeType] = None if down == -1 or down not in loc_to_pipe else loc_to_pipe[down]
-            pipe_left: Optional[PipeType] = None if left == -1 or left not in loc_to_pipe else loc_to_pipe[left]
+            pipe_up: Optional[PipeType] = (
+                None if up == -1 or up not in loc_to_pipe else loc_to_pipe[up]
+            )
+            pipe_right: Optional[PipeType] = (
+                None if right == -1 or right not in loc_to_pipe else loc_to_pipe[right]
+            )
+            pipe_down: Optional[PipeType] = (
+                None if down == -1 or down not in loc_to_pipe else loc_to_pipe[down]
+            )
+            pipe_left: Optional[PipeType] = (
+                None if left == -1 or left not in loc_to_pipe else loc_to_pipe[left]
+            )
 
             # check if there is an unassigned pipe in the adjacent spaces
             # if there isn't, then that space is a direct connection, meaning that it is distance 0 from a connection to an assigned pipe
@@ -703,7 +727,7 @@ class CSP:
                 direct_connections.add(down)
             if left != -1 and pipe_left is None:
                 direct_connections.add(left)
-        
+
         manhattan_dist: dict[int, list[int]] = {}
         lowest_dist = 2 * n
         # iterate through unassigned locations, for each one find the lowest manhattan distance
@@ -714,7 +738,7 @@ class CSP:
                 dist_y = abs((loc // n) - (connection // n))
 
                 min_dist = min(min_dist, dist_x + dist_y)
-                
+
             if min_dist in manhattan_dist:
                 manhattan_dist[min_dist].append(loc)
             else:
@@ -726,7 +750,5 @@ class CSP:
         loc_to_return = 0
         if randomize_order:
             loc_to_return = random.randint(0, len(manhattan_dist[lowest_dist]) - 1)
-
-        
 
         return loc_to_unassigned_var[manhattan_dist[lowest_dist][loc_to_return]]

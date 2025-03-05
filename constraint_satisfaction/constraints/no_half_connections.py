@@ -2,7 +2,7 @@ from pipe_typings import PipeType
 from csp import Variable
 
 
-def not_blocked_validator_h(pipes: list[PipeType]) -> bool:
+def validator_h(pipes: list[PipeType]) -> bool:
     """
     Ensures that two horizontally-adjacent pipes are not blocking each other
 
@@ -16,7 +16,7 @@ def not_blocked_validator_h(pipes: list[PipeType]) -> bool:
     return True
 
 
-def not_blocked_validator_v(pipes: list[PipeType]) -> bool:
+def validator_v(pipes: list[PipeType]) -> bool:
     """
     Ensures that two vertically-adjacent pipes are not blocking each other
 
@@ -30,7 +30,7 @@ def not_blocked_validator_v(pipes: list[PipeType]) -> bool:
     return True
 
 
-def not_blocked_pruner_h(pipes: list[Variable]) -> dict[Variable, list[PipeType]]:
+def pruner_h(pipes: list[Variable]) -> dict[Variable, list[PipeType]]:
     """
     prunes values from 2 variables that would result in one of the pipes being blocked by an exit of another pipe
 
@@ -75,7 +75,7 @@ def not_blocked_pruner_h(pipes: list[Variable]) -> dict[Variable, list[PipeType]
     return to_prune
 
 
-def not_blocked_pruner_v(pipes: list[Variable]) -> dict[Variable, list[PipeType]]:
+def pruner_v(pipes: list[Variable]) -> dict[Variable, list[PipeType]]:
     """
     prunes values from 2 variables that would result in one of the pipes being blocked by an exit of another pipe
 

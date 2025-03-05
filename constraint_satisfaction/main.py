@@ -1,13 +1,13 @@
 import time
 from csp import Variable, Constraint, CSP, DomainGenerator
-from constraints.no_blocking import (
-    not_blocked_validator_h,
-    not_blocked_validator_v,
-    not_blocked_pruner_h,
-    not_blocked_pruner_v,
+from constraints.no_half_connections import (
+    validator_h as no_half_connections_validator_h,
+    validator_v as no_half_connections_validator_v,
+    pruner_h as no_half_connections_pruner_h,
+    pruner_v as no_half_connections_pruner_v,
 )
 from pipe_typings import Assignment
-from constraints.tree import validator as tree_validator, pruner as tree_pruner
+from constraints.no_cycles import validator as tree_validator, pruner as tree_pruner
 from constraints.connected import (
     validator as connected_validator,
     pruner as connected_pruner,
@@ -23,7 +23,7 @@ while not n_validated:
         print("Value entered is not a digit.")
         continue
     n = int(solutions_str)
-    if n < 2 or n > 25:
+    if n < 1 or n > 25:
         print("Value for n is not between 2 and 25.")
         continue
     print(f"Value of n validated as {n}\n")
@@ -134,9 +134,7 @@ for i in range(n):
         right = variables[i * n + j + 1]
         scope = [left, right]
         name = f"no blocking horizontal {i * n + j, i * n + j + 1}"
-        no_blocking_h.append(
-            Constraint(name, not_blocked_validator_h, not_blocked_pruner_h, scope)
-        )
+        no_blocking_h.append(Constraint(name, no_half_connections_validator_h, no_half_connections_pruner_h, scope))
 
 # vertical cons
 no_blocking_v: list[Constraint] = []
@@ -146,9 +144,7 @@ for i in range(n - 1):
         below = variables[(i + 1) * n + j]
         scope = [above, below]
         name = f"no blocking vertical {i * n + j, (i + 1) * n + j}"
-        no_blocking_v.append(
-            Constraint(name, not_blocked_validator_v, not_blocked_pruner_v, scope)
-        )
+        no_blocking_v.append(Constraint(name, no_half_connections_validator_v, no_half_connections_pruner_v, scope))
 
 # add cons
 no_blocking_cons += no_blocking_h + no_blocking_v
@@ -165,7 +161,9 @@ all_cons = no_blocking_cons + [tree_con, connected_con]
 csp = CSP("Sewage pAIpes", variables, all_cons)
 solutions_gac: list[Assignment] = []
 t0 = time.time()
-csp.gac_all(solutions_gac, max_num_boards_generated, should_print_solutions, randomize_order)
+csp.gac_all(
+    solutions_gac, max_num_boards_generated, should_print_solutions, randomize_order
+)
 t1 = time.time()
 print(f"time: {t1 - t0}")
 
