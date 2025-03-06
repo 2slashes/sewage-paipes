@@ -169,6 +169,6 @@ all_cons = connectivity_cons + no_blocking_cons + [tree_con, connected_con]
 csp = CSP("Sewage pAIpes", variables, all_cons)
 solutions_gac: list[Assignment] = []
 t0 = time.time()
-csp.gac_all(solutions_gac)
+csp.fc_all(solutions_gac)
 t1 = time.time()
 print(f"time: {t1 - t0}")

@@ -70,7 +70,7 @@ def pseudo_assign(variables: list[Variable]) -> list[PipeType]:
     return pseudo_assignment
 
 
-def optimistic_psuedo_assign(variables: list[Variable]) -> list[PipeType]:
+def optimistic_pseudo_assign(variables: list[Variable]) -> list[PipeType]:
     """
     Same as pseudo_assign, but assumes (True, True, True, True) if unassigned
 
@@ -88,7 +88,7 @@ def optimistic_psuedo_assign(variables: list[Variable]) -> list[PipeType]:
 
 
 def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
-    pseudo_assignment = optimistic_psuedo_assign(variables)
+    pseudo_assignment = optimistic_pseudo_assign(variables)
     time = -1
     disc: dict[int, int] = {}
     low: dict[int, int] = {}
@@ -137,9 +137,9 @@ def prune_isolating_assignments(
     variables: list[Variable],
 ) -> dict[Variable, list[PipeType]]:
     """
-    Prune assignments that result in that pipe that's does not connect to anything
+    Prune assignments that result in that pipe being completely disconnected
     """
-    pseudo_assignment = optimistic_psuedo_assign(variables)
+    pseudo_assignment = optimistic_pseudo_assign(variables)
     unassigned_indicies = [
         i
         for i in range(len(pseudo_assignment))
