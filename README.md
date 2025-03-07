@@ -27,7 +27,7 @@ planutils activate
 ./generate_solutions
 ```
 
-This generates solutions. `planning/solution_parser.py` parses the problem and solution in a CSV file, making it easier to work
+This generates solutions. `planning/solution_parser.py` parses the state and solution files to a CSV file, making it easier to work
 with in neural networks.
 
 ## Deep Learning
