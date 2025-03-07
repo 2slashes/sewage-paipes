@@ -15,9 +15,11 @@ Run `constraint_satisfaction/main.py` and follow the prompts to generate solvabl
 After generating solvable PDDL files, we use the [planutils](https://github.com/AI-Planning/planutils) docker image to
 solve the puzzles. To do this, go into the planning directory, then run:
 
-1. `docker run -it --privileged -v ./pddl:/root/pddl -w /root/pddl aiplanning/planutils:latest bash`
-2. `planutils activate`
-3. `./generate_solutions`
+```bash
+docker run -it --privileged -v ./pddl:/root/pddl -w /root/pddl aiplanning/planutils:latest bash
+planutils activate
+./generate_solutions
+```
 
 This generates solutions. `planning/solution_parser.py` parses the problem and solution in a CSV file, making it easier to work
 with in neural networks.
