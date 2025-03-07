@@ -17,7 +17,13 @@ solve the puzzles. To do this, go into the planning directory, then run:
 
 ```bash
 docker run -it --privileged -v ./pddl:/root/pddl -w /root/pddl aiplanning/planutils:latest bash
+```
+
+```bash
 planutils activate
+```
+
+```bash
 ./generate_solutions
 ```
 
