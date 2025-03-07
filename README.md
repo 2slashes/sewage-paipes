@@ -8,7 +8,7 @@ This repository hosts the implementation of the 3 methods we used to solve vario
 
 ## Constraint Satisfaction (Puzzle Generation)
 
-Run `constraint_satisfaction/main.py` and follow the prompts to generate solvable puzzle configurations
+Run `constraint_satisfaction/main.py` and follow the prompts to generate solvable puzzle configurations. Output files reside in `planning/problems/`
 
 ## Planning
 
@@ -20,7 +20,7 @@ docker run -it --privileged -v ./pddl:/root/pddl -w /root/pddl --rm aiplanning/p
 ```
 
 This generates solutions. `planning/solution_parser.py` parses the state and solution files to a CSV file, making it easier to work
-with in neural networks.
+with in neural networks. Output file resides in `deep-learning/data/`
 
 ## Deep Learning
 
