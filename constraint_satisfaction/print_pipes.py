@@ -1,6 +1,6 @@
 from math import sqrt
 from typing import Literal
-from constraint_satisfaction.pipe_typings import PipeType
+from pipe_typings import PipeType
 
 # mapping of PipeTypes to a character that represents them visually.
 PIPE_CHAR: dict[PipeType, str] = {
