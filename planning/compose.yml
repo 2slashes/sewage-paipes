@@ -1,9 +1,0 @@
-services:
-  app:
-    image: aiplanning/planutils
-    container_name: planutils
-    volumes:
-      - ./pddl:/root/pddl
-    working_dir: /root/pddl
-    privileged: true
-    tty: true

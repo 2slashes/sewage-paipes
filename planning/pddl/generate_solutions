@@ -1,10 +1,18 @@
+#! /bin/bash
+
 # needs to iterate through a specified folder (or through all folders whose names are an int)
 # for each file in the folder, run the following:
 # downward --sas-file solutions/folder/file.sas domain.pddl folder/file.pddl
 # for each line in the new sas file (from top to bottom), check if it matches (regex?) with the format "action object"
 # this might need a list of all objects in the problem
 # if it does, add the current state and action to a csv file, then update the current state by applying the action
-#!/bin/bash
+
+# Environment variables
+export PLANUTILS_PREFIX="$HOME/.planutils"
+export PATH="$PATH:$PLANUTILS_PREFIX/bin"
+
+# Install 
+planutils install -y downward
 
 # iterate through all directories in the current folder
 for dir in problems/*/; do
@@ -39,3 +47,5 @@ for dir in problems/*/; do
     fi
 done
 rmdir problems
+
+exit

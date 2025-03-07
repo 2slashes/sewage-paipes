@@ -16,15 +16,7 @@ After generating solvable PDDL files, we use the [planutils](https://github.com/
 solve the puzzles. To do this, go into the planning directory, then run:
 
 ```bash
-docker run -it --privileged -v ./pddl:/root/pddl -w /root/pddl aiplanning/planutils:latest bash
-```
-
-```bash
-planutils activate
-```
-
-```bash
-./generate_solutions
+docker run -it --privileged -v ./pddl:/root/pddl -w /root/pddl --rm aiplanning/planutils:latest bash -c "source ./generate_solutions"
 ```
 
 This generates solutions. `planning/solution_parser.py` parses the problem and solution in a CSV file, making it easier to work
