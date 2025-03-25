@@ -67,15 +67,10 @@ class PipesPredictor(nn.Module):
 
 n = 4
 model = PipesPredictor(n**2 * 4, 64, n**2).to(device)
-# state = torch.rand((1, n**2 * 4), device=device)
-# output = model(state)
-# print(output)
-# move = torch.argmax(output).item()
-# print(f"Suggested move: Pipe {move}")
 
 learning_rate = 1e-3
 batch_size = 64
-epochs = 5
+epochs = 100
 
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
