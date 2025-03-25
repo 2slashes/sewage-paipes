@@ -38,7 +38,7 @@ for dir in problems/*/; do
                     solution_dir="solutions/$base_name"
                     mkdir -p "$solution_dir/"
                     solution_file="$solution_dir/solution${problem_number}"
-                    downward --alias seq-opt-merge-and-shrink --plan-file "$solution_file" --search-time-limit 30 domain.pddl "$file"
+                    downward --alias seq-opt-merge-and-shrink --plan-file "$solution_file" --search-time-limit 10000 domain.pddl "$file"
                     rm "$file"
                 fi
             fi

@@ -58,7 +58,7 @@ def generate_all_pddl_and_state_files(
                 file.write(state_str)
             cur_num_files += 1
             # check if enough solutions have been generated
-            if cur_num_files >= max_solutions:
+            if cur_num_files >= max_solutions and max_solutions != -1:
                 return
 
 

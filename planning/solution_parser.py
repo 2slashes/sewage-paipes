@@ -25,8 +25,8 @@ def parse_all():
         "rotate_pipe_left_up_right",
     ]
     curr_dir = os.path.dirname(__file__)
-    csv_dir = os.path.join(curr_dir, "../deep-learning/data/")
-    csv_file_name = os.path.join(curr_dir, "../deep-learning/data/out.csv")
+    csv_dir = os.path.join(curr_dir, "../deep_learning/data/")
+    csv_file_name = os.path.join(curr_dir, "../deep_learning/data/out.csv")
 
     # create the directory for the csv if it doesn't exist
     try:
