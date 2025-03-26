@@ -70,7 +70,7 @@ model = PipesPredictor(n**2 * 4, 64, n**2).to(device)
 
 learning_rate = 1e-3
 batch_size = 64
-epochs = 100
+epochs = 5
 
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
