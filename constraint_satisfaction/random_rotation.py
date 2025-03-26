@@ -36,7 +36,10 @@ def random_rotate_board(board: Assignment, num_rotations: int) -> list[Assignmen
             num_rotations_pipe = random.randint(0, 3)
             new_pipe = clockwise_rotate(pipe, num_rotations_pipe)
             new_board.append(new_pipe)
-            pipe_rotations[-1][i] = num_rotations_pipe
+            # The number of rotations to return the pipe to its original position is 4, so the number of rotations in the solution is 4 minus the number that have already been done
+            # if no rotations were done, then none should be done in the solution
+            if num_rotations_pipe:
+                pipe_rotations[-1][i] = (4 - num_rotations_pipe) % 4
         # ensure that the random rotation of the board has not been generated already
         if new_board not in new_boards:
             new_boards.append(new_board)
@@ -74,12 +77,36 @@ def output_rotations(initial_state: str, goal_state: str, rotations: dict[int, i
         writer = csv.writer(csv_file)
         # write the header if the csv file is empty or if it didn't exist
         if include_header:
-            writer.writerow(["state", "action"])
+            writer.writerow(["state", "actions"])
         cur_state = initial_state
-        for i in range(len(initial_state)//4):
-            for n in range(4 - rotations[i]):
-                writer.writerow([cur_state, i])
-                cur_state = pipe_rotate_binary(i, cur_state)
+        # for key in rotations:
+        #     for n in range(rotations[key]):
+        #         # create a binary string representing the pipes that need to be rotated
+        #         rotation_str: str = ""
+        #         for i in range(len(initial_state)//4):
+        #             if i in rotations and rotations[i]:
+        #                 rotation_str += "1"
+        #             else:
+        #                 rotation_str += "0"
+        #         writer.writerow([cur_state, rotation_str])
+        #         rotations[key] -= 1
+        #         cur_state = pipe_rotate_binary(key, cur_state)
+        
+        while rotations:
+            # select a random key in rotations
+            key = list(rotations.keys())[random.randint(0, len(rotations.keys()) - 1)]
+            # create a binary string representing the pipes that need to be rotated
+            rotation_str: str = ""
+            for i in range(len(initial_state)//4):
+                if i in rotations and rotations[i]:
+                    rotation_str += "1"
+                else:
+                    rotation_str += "0"
+            writer.writerow([cur_state, rotation_str])
+            rotations[key] -= 1
+            if rotations[key] <= 0:
+                del rotations[key]
+            cur_state = pipe_rotate_binary(key, cur_state)
 
     # check if the final state matches the goal state
     if goal_state != cur_state:
