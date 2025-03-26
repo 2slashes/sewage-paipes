@@ -23,5 +23,4 @@ model.eval()
 state = "0100010101110001010001011011001001000011100110110100110101011001"
 state_int_list = [int(x) for x in state]
 state_tensor = torch.tensor(state_int_list).to(device).float()
-print(nn.functional.softmax(state_tensor, dim=1))
 print(torch.argmax(model(state_tensor)))
