@@ -5,8 +5,8 @@ from pipes_nn_classes import PipesDataset, PipesPredictor, PipesLoss
 
 
 # split the data into training and testing data
-train_data = PipesDataset("data/train.csv")
-test_data = PipesDataset("data/test.csv")
+train_data = PipesDataset("data/old/train.csv")
+test_data = PipesDataset("data/old/test.csv")
 
 # prepare the dataset for training with DataLoaders
 batch_size = 64
@@ -15,6 +15,7 @@ test_dataloader = DataLoader(test_data, batch_size, shuffle=True)
 
 # get the header from the training data
 train_features, train_labels = next(iter(train_dataloader))
+
 test_features, test_labels = next(iter(test_dataloader))
 
 device = (
@@ -49,7 +50,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
 
         if batch % 100 == 0:
             loss, current = loss.item(), batch * batch_size + len(X)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+            # print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
 
 def test_loop(dataloader, model, loss_fn):
