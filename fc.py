@@ -29,7 +29,7 @@ from tree import validator as tree_validator, pruner as tree_pruner
 from connected import validator as connected_validator, pruner as connected_pruner
 
 
-n = 4
+n = 3
 variables: list[Variable] = []
 
 # initialize variable objects
