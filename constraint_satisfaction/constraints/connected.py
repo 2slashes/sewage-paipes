@@ -1,6 +1,6 @@
 from typing import Optional
 from pipe_typings import PipeType
-from csp import Variable
+from csp import Assignment, Variable
 from math import sqrt
 from pipes_utils import find_adj, check_connections
 
@@ -39,24 +39,6 @@ def dft(pipes: list[PipeType], loc: int, visited: list[int]) -> None:
             dft(pipes, adj_vals[i], visited)
 
 
-def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
-    pruned: dict[Variable, list[PipeType]] = {}
-    pseudo_assignment = pseudo_assign(variables)
-    pruned: dict[Variable, list[PipeType]] = {}
-
-    can_be_connected = validator(pseudo_assignment)
-    if not can_be_connected:
-        for var in variables:
-            if var.get_assignment() is None:
-                pruned = {var: var.get_active_domain()}
-                var.prune(var.get_active_domain())
-                break
-    else:
-        for i in range(len(pseudo_assignment)):
-            find_isolated_path(variables, pseudo_assignment, i, -1, pruned)
-    return pruned
-
-
 def pseudo_assign(variables: list[Variable]) -> list[PipeType]:
     """
     Creates a "pseudo assignment" of pipes. A pseudo assignment is created by taking the active domains of assigned variables and creating a PipeType containing all the possible directions that the unassigned variable could point in.
@@ -88,53 +70,171 @@ def pseudo_assign(variables: list[Variable]) -> list[PipeType]:
     return pseudo_assignment
 
 
-def find_isolated_path(
-    variables: list[Variable],
-    pseudo_assignment: list[PipeType],
-    i: int,
-    last_dir: int,
-    pruned: dict[Variable, list[PipeType]],
-):
-    main_pipe = pseudo_assignment[i]
-    main_var = variables[i]
-    adj_index = find_adj(i, int(sqrt(len(pseudo_assignment))))
-    to_prune: list[PipeType] = []
-    # holds adjacent PipeTypes, not including the pipe that came before in the path
-    adj_pipe_list: list[Optional[PipeType]] = [None, None, None, None]
-    for i in range(4):
-        if adj_index[i] != -1 and i != last_dir:
-            adj_pipe_list[i] = pseudo_assignment[adj_index[i]]
-    adj_pipes = (adj_pipe_list[0], adj_pipe_list[1], adj_pipe_list[2], adj_pipe_list[3])
-    connections = check_connections(main_pipe, adj_pipes)
-    num_connections = 0
-    cur_dir = 0
-    for i in range(4):
-        if connections[i]:
-            num_connections += 1
-            cur_dir = i
-    if num_connections == 1:
-        # the path continues, prune from current variable
-        path_dir = 0
-        for i in range(4):
-            if connections[i] and i != last_dir:
-                path_dir = i
-                break
-        if main_var.get_assignment() is None:
-            active_domain = main_var.get_active_domain()
-            for assignment in active_domain:
-                if not assignment[cur_dir] or (
-                    last_dir != -1 and not assignment[last_dir]
-                ):
-                    to_prune.append(assignment)
-                    if main_var in pruned:
-                        pruned[main_var].append(assignment)
+def optimistic_pseudo_assign(variables: list[Variable]) -> list[PipeType]:
+    """
+    Same as pseudo_assign, but assumes (True, True, True, True) if unassigned
+
+    :params variables: All the variables for the csp.
+    :returns: List containing pseudo-assigned values for the variables
+    """
+    pseudo_assignment: list[PipeType] = []
+    for var in variables:
+        assignment = var.get_assignment()
+        if assignment is not None:
+            pseudo_assignment.append(assignment)
+        else:
+            pseudo_assignment.append((True, True, True, True))
+    return pseudo_assignment
+
+
+def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
+    pseudo_assignment = optimistic_pseudo_assign(variables)
+    time = -1
+    disc: dict[int, int] = {}
+    low: dict[int, int] = {}
+    articulation_points: set[int] = set()
+    result: dict[Variable, list[PipeType]] = {}
+
+    # print1DGrid(pseudo_assignment)  # type: ignore
+
+    isolation_pruned = prune_isolating_assignments(variables)
+    for var in isolation_pruned:
+        if var not in result:
+            result[var] = isolation_pruned[var]
+        else:
+            result[var] += isolation_pruned[var]
+
+    find_articulation_points(
+        assignment=pseudo_assignment,
+        loc=0,
+        time=time,
+        disc=disc,
+        low=low,
+        articulation_points=articulation_points,
+    )
+    for point in articulation_points:
+        var_to_prune = variables[point]
+        if var_to_prune.get_assignment() == None:
+            for potential_assignment in var_to_prune.get_active_domain():
+                assignment = pseudo_assignment.copy()
+                assignment[point] = potential_assignment
+                if not validator(assignment):
+                    if var_to_prune not in result:
+                        result[var_to_prune] = [potential_assignment]
                     else:
-                        pruned[main_var] = [assignment]
-            main_var.prune(to_prune)
-        find_isolated_path(
-            variables,
-            pseudo_assignment,
-            adj_index[path_dir],
-            (path_dir + 2) % 4,
-            pruned,
+                        result[var_to_prune].append(potential_assignment)
+                    var_to_prune.prune([potential_assignment])
+
+    # if len(result) != 0:
+    #     for var in result:
+    #         print(f"Pruned {var.location}: {[PIPE_CHAR[pipe] for pipe in result[var]]}")
+    #     a = 2
+
+    return result
+
+
+def prune_isolating_assignments(
+    variables: list[Variable],
+) -> dict[Variable, list[PipeType]]:
+    """
+    Prune assignments that result in that pipe being completely disconnected
+    """
+    pseudo_assignment = optimistic_pseudo_assign(variables)
+    unassigned_indicies = [
+        i
+        for i in range(len(pseudo_assignment))
+        if variables[i].get_assignment() == None
+    ]
+    result: dict[Variable, list[PipeType]] = {}
+
+    for i in unassigned_indicies:
+        adj_indices = find_adj(i, int(sqrt(len(pseudo_assignment))))
+        top_val: Optional[PipeType] = None
+        if adj_indices[0] != -1:
+            top_val = pseudo_assignment[adj_indices[0]]
+        right_val: Optional[PipeType] = None
+        if adj_indices[1] != -1:
+            right_val = pseudo_assignment[adj_indices[1]]
+        bottom_val: Optional[PipeType] = None
+        if adj_indices[2] != -1:
+            bottom_val = pseudo_assignment[adj_indices[2]]
+        left_val: Optional[PipeType] = None
+        if adj_indices[3] != -1:
+            left_val = pseudo_assignment[adj_indices[3]]
+        connections: tuple[bool, bool, bool, bool] = check_connections(
+            pseudo_assignment[i], (top_val, right_val, bottom_val, left_val)
         )
+        openings: list[int] = []
+        for direction in range(4):
+            if connections[direction]:
+                openings.append(direction)
+        for potential_assignment in variables[i].get_active_domain():
+            all_closed = all(not potential_assignment[opening] for opening in openings)
+            if all_closed:
+                if variables[i] not in result:
+                    result[variables[i]] = [potential_assignment]
+                else:
+                    result[variables[i]].append(potential_assignment)
+                variables[i].prune([potential_assignment])
+
+    return result
+
+
+def find_articulation_points(
+    assignment: Assignment,
+    loc: int,
+    time: int,
+    disc: dict[int, int],
+    low: dict[int, int],
+    articulation_points: set[int],
+    parent: Optional[int] = None,
+) -> int:
+    """
+    Uses Tarjan's algorithm to find articulation points in the graph
+    """
+    time += 1
+    disc[loc] = time
+    low[loc] = time
+
+    adj_indices = find_adj(loc, int(sqrt(len(assignment))))
+
+    top_val: Optional[PipeType] = None
+    if adj_indices[0] != -1:
+        top_val = assignment[adj_indices[0]]
+    right_val: Optional[PipeType] = None
+    if adj_indices[1] != -1:
+        right_val = assignment[adj_indices[1]]
+    bottom_val: Optional[PipeType] = None
+    if adj_indices[2] != -1:
+        bottom_val = assignment[adj_indices[2]]
+    left_val: Optional[PipeType] = None
+    if adj_indices[3] != -1:
+        left_val = assignment[adj_indices[3]]
+    connections: tuple[bool, bool, bool, bool] = check_connections(
+        assignment[loc], (top_val, right_val, bottom_val, left_val)
+    )
+    child_count = 0
+    for direction in range(4):
+        curr_neighbor = adj_indices[direction]
+        if connections[direction] and curr_neighbor != parent:
+            if curr_neighbor not in disc:
+                child_count += 1
+                time = find_articulation_points(
+                    assignment,
+                    curr_neighbor,
+                    time,
+                    disc,
+                    low,
+                    articulation_points,
+                    parent=loc,
+                )
+                low[loc] = min(low[loc], low[curr_neighbor])
+                if parent == None:
+                    if child_count > 1:
+                        articulation_points.add(loc)
+                else:
+                    if low[curr_neighbor] >= disc[loc]:
+                        articulation_points.add(loc)
+            else:
+                low[loc] = min(low[loc], disc[curr_neighbor])
+    return time

@@ -134,7 +134,14 @@ for i in range(n):
         right = variables[i * n + j + 1]
         scope = [left, right]
         name = f"no blocking horizontal {i * n + j, i * n + j + 1}"
-        no_blocking_h.append(Constraint(name, no_half_connections_validator_h, no_half_connections_pruner_h, scope))
+        no_blocking_h.append(
+            Constraint(
+                name,
+                no_half_connections_validator_h,
+                no_half_connections_pruner_h,
+                scope,
+            )
+        )
 
 # vertical cons
 no_blocking_v: list[Constraint] = []
@@ -144,7 +151,14 @@ for i in range(n - 1):
         below = variables[(i + 1) * n + j]
         scope = [above, below]
         name = f"no blocking vertical {i * n + j, (i + 1) * n + j}"
-        no_blocking_v.append(Constraint(name, no_half_connections_validator_v, no_half_connections_pruner_v, scope))
+        no_blocking_v.append(
+            Constraint(
+                name,
+                no_half_connections_validator_v,
+                no_half_connections_pruner_v,
+                scope,
+            )
+        )
 
 # add cons
 no_blocking_cons += no_blocking_h + no_blocking_v
