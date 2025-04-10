@@ -1,6 +1,6 @@
 from typing import Optional
 from pipe_typings import PipeType
-from csp import Assignment, Variable, print1DGrid, PIPE_CHAR
+from csp import Assignment, Variable
 from math import sqrt
 from pipes_utils import find_adj, check_connections
 
@@ -188,7 +188,7 @@ def find_articulation_points(
     low: dict[int, int],
     articulation_points: set[int],
     parent: Optional[int] = None,
-):
+) -> int:
     """
     Uses Tarjan's algorithm to find articulation points in the graph
     """
