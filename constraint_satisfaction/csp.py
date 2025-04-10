@@ -630,6 +630,7 @@ class CSP:
 
         # try every active assignment for the variable
         for assignment in active_domain:
+            domain_backup = {v: v.active_domain[:] for v in self.vars}
             # print(f"assigning value {assignment} to variable {curr_var}")
             self.unassign_var(curr_var)
             self.assign_var(curr_var, assignment)
@@ -650,6 +651,8 @@ class CSP:
             # dead-end (no active domains for some variable) reached, restore the active domains
             for var in pruned_domains:
                 var.active_domain += pruned_domains[var]
+            for v in self.vars:
+                v.active_domain = domain_backup[v]
 
         # if the code gets here, then all solutions for all assignments of this variable have been found.
         # Backtrack and try another assignment for a variable that was assigned earlier.

@@ -41,37 +41,6 @@ def dft(pipes: list[PipeType], loc: int, visited: list[int]) -> None:
 
 def pseudo_assign(variables: list[Variable]) -> list[PipeType]:
     """
-    Creates a "pseudo assignment" of pipes. A pseudo assignment is created by taking the active domains of assigned variables and creating a PipeType containing all the possible directions that the unassigned variable could point in.
-
-    :params variables: All the variables for the csp.
-    :returns: List containing pseudo-assigned values for the variables
-    """
-    pseudo_assignment: list[PipeType] = []
-    for var in variables:
-        assignment = var.get_assignment()
-        if assignment is not None:
-            pseudo_assignment.append(assignment)
-        else:
-            pseudo_pipe: list[bool] = [False, False, False, False]
-            for active_domain in var.get_active_domain():
-                all_true = False
-                for direction in range(4):
-                    if active_domain[direction]:
-                        pseudo_pipe[direction] = True
-                        if sum(pseudo_pipe) == 4:
-                            all_true = True
-                            break
-                if all_true:
-                    break
-            pseudo_assignment.append(
-                (pseudo_pipe[0], pseudo_pipe[1], pseudo_pipe[2], pseudo_pipe[3])
-            )
-
-    return pseudo_assignment
-
-
-def optimistic_pseudo_assign(variables: list[Variable]) -> list[PipeType]:
-    """
     Same as pseudo_assign, but assumes (True, True, True, True) if unassigned
 
     :params variables: All the variables for the csp.
@@ -88,7 +57,7 @@ def optimistic_pseudo_assign(variables: list[Variable]) -> list[PipeType]:
 
 
 def pruner(variables: list[Variable]) -> dict[Variable, list[PipeType]]:
-    pseudo_assignment = optimistic_pseudo_assign(variables)
+    pseudo_assignment = pseudo_assign(variables)
     time = -1
     disc: dict[int, int] = {}
     low: dict[int, int] = {}
@@ -139,7 +108,7 @@ def prune_isolating_assignments(
     """
     Prune assignments that result in that pipe being completely disconnected
     """
-    pseudo_assignment = optimistic_pseudo_assign(variables)
+    pseudo_assignment = pseudo_assign(variables)
     unassigned_indicies = [
         i
         for i in range(len(pseudo_assignment))
