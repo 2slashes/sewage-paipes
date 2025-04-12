@@ -21,10 +21,14 @@ model.eval()
 
 global cache
 cache = []
+global visited
+visited = set()
 
 
-initial = "1000010110110110100010101110010100011001101010100010111000110010"
-goal = "0100010101110011010001011011101001000011101010101000110110011000"
+# initial = "0010100001001001101011001010011101011000010001111001110101011100"
+# goal = "0010001001000011101011000101101110100010001010111100110101011001"
+initial = "0110101010110100010101101110000110101010001110111000001101000100"
+goal = "0110010101110001101001101011001010101010110010111000110000011000"
 # state_int_list = [int(x) for x in state]
 # state_tensor = torch.tensor(state_int_list).to(device).float()
 # result = model(state_tensor)
@@ -34,6 +38,7 @@ goal = "0100010101110011010001011011101001000011101010101000110110011000"
 
 def pick_move(state):
     global cache
+    global visited
     if len(cache) > 3:
         cache = cache[-3:]
     # convert the state to integers
@@ -42,16 +47,26 @@ def pick_move(state):
     state_tensor = torch.tensor(state_int_list).to(device).float()
     # get the predicted move from the neural network
     prob = model(state_tensor)
-    result = torch.argmax(prob).item()
-    if len(cache) == 3 and cache[0] == cache[1] == cache[2] == result:
-        result = int(torch.topk(prob, 2).values[1].item())
+    # result = torch.argmax(prob).item()
+    results = torch.topk(prob, 16).indices
+    # print(results)
     # output the result
     # print(torch.softmax(prob, dim=0))
     # print(result)
-    cache.append(result)
+    # cache.append(result)
 
     # apply the rotation to the state and return the new state
-    return pipe_rotate_binary(result, state), result
+    new_state = state
+    result = 0
+    for r in results:
+        result = int(r)
+        new_state = pipe_rotate_binary(result, state)
+        if new_state not in visited:
+            visited.add(new_state)
+            break
+    if new_state == state:
+        raise Exception("chyme")
+    return new_state, result
 
 
 def pipe_rotate_binary(pipe: int, board: str):
@@ -78,9 +93,14 @@ def pipe_rotate_binary(pipe: int, board: str):
 
 
 state = initial
+visited.add(initial)
+moves = 0
 while state != goal:
     state, result = pick_move(state)
     print(state, result)
+    visited.add(state)
+    moves += 1
+print(f"moves: {moves}")
 
 # 0010010101110011001010101101101000100011010010100100110101011001
 # 0010010101110011001001011101101000100011010010100100110101011001

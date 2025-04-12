@@ -2,11 +2,12 @@ import torch
 from torch.utils.data import DataLoader
 import os
 from pipes_nn_classes import PipesDataset, PipesPredictor, PipesLoss
+from torch import nn
 
 
 # split the data into training and testing data
-train_data = PipesDataset("data/old/train.csv")
-test_data = PipesDataset("data/old/test.csv")
+train_data = PipesDataset("data/train.csv")
+test_data = PipesDataset("data/test.csv")
 
 # prepare the dataset for training with DataLoaders
 batch_size = 64
@@ -32,7 +33,7 @@ model = PipesPredictor(n**2 * 4, 64, n**2).to(device)
 learning_rate = 1e-3
 epochs = 5
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
-loss_fn = PipesLoss()
+loss_fn = nn.CrossEntropyLoss()
 
 
 def train_loop(dataloader, model, loss_fn, optimizer):
@@ -50,7 +51,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
 
         if batch % 100 == 0:
             loss, current = loss.item(), batch * batch_size + len(X)
-            # print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
 
 def test_loop(dataloader, model, loss_fn):
@@ -64,11 +65,9 @@ def test_loop(dataloader, model, loss_fn):
             X, y = X.to(device).float(), y.to(device)
             pred = model(X)
             test_loss += loss_fn(pred, y).item()
-            for i in range(pred.shape[0]):  # Iterate through each sample in the batch
-                if y[i][
-                    pred.argmax(1)[i].item()
-                ]:  # Check if predicted action is in the list of valid actions
-                    correct += 1
+            predicted_labels = torch.argmax(pred, dim=1)
+            correct += (predicted_labels == y).sum().item()
+
 
     test_loss /= num_batches
     correct /= size
