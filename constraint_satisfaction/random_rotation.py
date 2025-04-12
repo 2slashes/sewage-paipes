@@ -94,14 +94,16 @@ def output_rotations(initial_state: str, goal_state: str, rotations: dict[int, i
         
         while rotations:
             # select a random key in rotations
-            key = list(rotations.keys())[random.randint(0, len(rotations.keys()) - 1)]
+            key = list(rotations.keys())[0]
             # create a binary string representing the pipes that need to be rotated
-            rotation_str: str = ""
-            for i in range(len(initial_state)//4):
-                if i in rotations and rotations[i]:
-                    rotation_str += "1"
-                else:
-                    rotation_str += "0"
+            # find the first index that must be rotated as part of the solution
+            rotation_str: str = str(key)
+            # for i in range(len(initial_state)//4):
+            #     if i in rotations and rotations[i]:
+            #         rotation_str += "1"
+            #     else:
+            #         rotation_str += "0"
+            
             writer.writerow([cur_state, rotation_str])
             rotations[key] -= 1
             if rotations[key] <= 0:
