@@ -15,6 +15,8 @@ from constraints.connected import (
 from pddl_output import generate_all_pddl_and_state_files
 from math import ceil
 
+from random_rotation import random_rotate_board, generate_solutions
+
 n: int = 0
 n_validated = False
 while not n_validated:
@@ -180,7 +182,10 @@ csp.gac_all(
 )
 t1 = time.time()
 print(f"time: {t1 - t0}")
-
-# generate the PDDL and state files for all of the problems
 if should_generate_pddl:
-    generate_all_pddl_and_state_files(solutions_gac, num_rotations, n, max_solutions)
+    for solution in solutions_gac:
+        random_rotate_board(solution, num_rotations)
+
+# # generate the PDDL and state files for all of the problems
+# if should_generate_pddl:
+#     generate_all_pddl_and_state_files(solutions_gac, num_rotations, n, max_solutions)
