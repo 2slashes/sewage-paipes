@@ -3,6 +3,7 @@ import random
 import os
 import csv
 
+
 def clockwise_rotate(pipe: PipeType, n: int) -> PipeType:
     """
     Rotate a PipeType clockwise by 90*n degrees.
@@ -18,13 +19,14 @@ def clockwise_rotate(pipe: PipeType, n: int) -> PipeType:
     new_pipe: PipeType = (top, right, bottom, left)
     return new_pipe
 
+
 def random_rotate_board(board: Assignment, num_rotations: int) -> list[Assignment]:
     """
     Rotates every pipe on a pipes board by either 0, 90, 180, or 270 degrees, at random.
 
     :params board: list of PipeTypes that represents the board to be randomly rotated
     :params num_rotations: number of times to rotate the full board, also the number of new boards that will be returned.
-    :returns: list of boards after random rotation.  
+    :returns: list of boards after random rotation.
     """
     new_boards: list[Assignment] = []
     pipe_rotations: list[dict[int, int]] = []
@@ -46,7 +48,10 @@ def random_rotate_board(board: Assignment, num_rotations: int) -> list[Assignmen
     generate_solutions(new_boards, board, pipe_rotations)
     return new_boards
 
-def generate_solutions(boards: list[Assignment], solution: Assignment, rotation_maps: list[dict[int, int]]):
+
+def generate_solutions(
+    boards: list[Assignment], solution: Assignment, rotation_maps: list[dict[int, int]]
+):
     curr_dir = os.path.dirname(__file__)
     csv_dir = os.path.join(curr_dir, "../deep_learning/data/")
     csv_file_name = os.path.join(curr_dir, "../deep_learning/data/test.csv")
@@ -60,15 +65,18 @@ def generate_solutions(boards: list[Assignment], solution: Assignment, rotation_
         pass
     except Exception as e:
         print(f"An error occurred: {e}")
-    
+
     goal_state = generate_one_state_str(solution)
     initial_states = []
     for board in boards:
         initial_states.append(generate_one_state_str(board))
     for n, rotations in enumerate(rotation_maps):
         output_rotations(initial_states[n], goal_state, rotations, csv_file_name)
-        
-def output_rotations(initial_state: str, goal_state: str, rotations: dict[int, int], file_path: str):
+
+
+def output_rotations(
+    initial_state: str, goal_state: str, rotations: dict[int, int], file_path: str
+):
     include_header = True
     if os.path.exists(file_path) and os.path.getsize(file_path) != 0:
         # Check if the csv file exists and is not empty
@@ -91,19 +99,17 @@ def output_rotations(initial_state: str, goal_state: str, rotations: dict[int, i
         #         writer.writerow([cur_state, rotation_str])
         #         rotations[key] -= 1
         #         cur_state = pipe_rotate_binary(key, cur_state)
-        
+
         while rotations:
             # select a random key in rotations
-            key = list(rotations.keys())[0]
+            key = list(rotations.keys())[random.randint(0, len(rotations.keys()) - 1)]
             # create a binary string representing the pipes that need to be rotated
-            # find the first index that must be rotated as part of the solution
-            rotation_str: str = str(key)
-            # for i in range(len(initial_state)//4):
-            #     if i in rotations and rotations[i]:
-            #         rotation_str += "1"
-            #     else:
-            #         rotation_str += "0"
-            
+            rotation_str: str = ""
+            for i in range(len(initial_state) // 4):
+                if i in rotations and rotations[i]:
+                    rotation_str += "1"
+                else:
+                    rotation_str += "0"
             writer.writerow([cur_state, rotation_str])
             rotations[key] -= 1
             if rotations[key] <= 0:
@@ -115,7 +121,7 @@ def output_rotations(initial_state: str, goal_state: str, rotations: dict[int, i
         print(goal_state)
         print(cur_state)
         raise Exception("goal is wrong")
-    
+
 
 def generate_one_state_str(state: Assignment):
     output = ""
@@ -126,6 +132,7 @@ def generate_one_state_str(state: Assignment):
             else:
                 output += "0"
     return output
+
 
 def pipe_rotate_binary(pipe: int, board: str):
     """
