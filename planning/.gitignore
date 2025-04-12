@@ -1,0 +1,7 @@
+pddl/problems/
+pddl/solutions/
+states/
+pddl/.apptainer
+.bash_history
+pddl/.planutils
+pddl/output.sas

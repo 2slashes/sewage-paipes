@@ -151,13 +151,3 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-
-tests/
-planning/pddl/problems/
-planning/pddl/solutions/
-/planning/states/
-planning/pddl/.apptainer
-.bash_history
-/planning/pddl/.planutils
-/planning/pddl/output.sas
-/deep_learning/data
