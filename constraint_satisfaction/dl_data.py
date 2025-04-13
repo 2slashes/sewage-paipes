@@ -165,7 +165,7 @@ def main():
         )
 
     curr_dir = os.path.dirname(__file__)
-    data_dir = os.path.join(curr_dir, "data")
+    data_dir = os.path.join(curr_dir, "../deep_learning/data")
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
     write_csv(
