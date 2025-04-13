@@ -109,6 +109,7 @@ with open(puzzle_path, newline="") as csvfile:
 total_moves = 0
 corrects = 0
 bad_pipes_when_incorrect = []
+all_moves = []
 
 for i in range(len(initials)):
     initial = initials[i]
@@ -117,7 +118,7 @@ for i in range(len(initials)):
 
     state = initial
     visited[initial] = set()
-    cur_puzzle_move = 0
+    cur_puzzle_moves = 0
     while state != goal:
         move = pick_move(state, visited)
         bad_pipes = get_bad_pipes(state, goal)
@@ -127,14 +128,15 @@ for i in range(len(initials)):
             bad_pipes_when_incorrect.append(len(bad_pipes))
         visited[state].add(move)
         state = pipe_rotate_binary(state, move)
-        cur_puzzle_move += 1
+        cur_puzzle_moves += 1
         total_moves += 1
-        print(f"Accuracy: {corrects / total_moves}")
-        if len(bad_pipes_when_incorrect) > 0:
-            print(
-                f"Average bad pipes when incorrect: {sum(bad_pipes_when_incorrect) / len(bad_pipes_when_incorrect)}"
-            )
-    print(f"Solution {i+1}: {cur_puzzle_move} moves")
+        # print(f"Accuracy: {corrects / total_moves}")
+        # if len(bad_pipes_when_incorrect) > 0:
+        #     print(
+        #         f"Average bad pipes when incorrect: {sum(bad_pipes_when_incorrect) / len(bad_pipes_when_incorrect)}"
+        #     )
+    print(f"Solution {i+1}: {cur_puzzle_moves} moves")
+    all_moves.append(cur_puzzle_moves)
 
 print("-----------")
 print(f"Accuracy: {corrects / total_moves}")
@@ -142,3 +144,5 @@ print(
     f"Average bad pipes when incorrect: {sum(bad_pipes_when_incorrect) / len(bad_pipes_when_incorrect)}"
 )
 print(f"Average moves: {total_moves / len(initials)}")
+
+print(f"Outliers: {[x for x in all_moves if x > 100]}")

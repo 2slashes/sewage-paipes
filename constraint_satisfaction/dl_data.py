@@ -55,6 +55,12 @@ def parse_args():
         required=True,
         help="Number of puzzles to generate for the network to play",
     )
+    parser.add_argument(
+        "--gac-after-every",
+        type=int,
+        default=4,
+        help="Number of solutions to generate before creating a new CSP instance",
+    )
 
     args = parser.parse_args()
 
@@ -77,6 +83,9 @@ def parse_args():
     if args.num_puzzles < 1:
         parser.error("Number of puzzles to generate must be at least 1")
 
+    if args.gac_after_every < 1:
+        parser.error("Number of solutions before new GAC must be at least 1")
+
     return args
 
 
@@ -87,90 +96,108 @@ def main():
     num_puzzles_train = args.puzzles_train
     num_solutions_test = args.solutions_test
     num_puzzles_test = args.puzzles_test
+    gac_after_every = args.gac_after_every
 
-    # Initialize variables and constraints
-    variables: list[Variable] = []
-
-    # initialize variable objects
-    for i in range(n):
-        row: list[Variable] = []
-        for j in range(n):
-            top = i == 0
-            bottom = i == n - 1
-            left = j == 0
-            right = j == n - 1
-            var = Variable(
-                location=i * n + j,
-                domain=DomainGenerator.generate_domain(top, right, bottom, left),
-            )
-            row.append(var)
-        variables += row
-
-    all_cons: list[Constraint] = []
-
-    # create binary constraints for no blocking
-    no_blocking_cons: list[Constraint] = []
-    # start with horizontal cons
-    no_blocking_h: list[Constraint] = []
-    for i in range(n):
-        for j in range(n - 1):
-            left = variables[i * n + j]
-            right = variables[i * n + j + 1]
-            scope = [left, right]
-            name = f"no blocking horizontal {i * n + j, i * n + j + 1}"
-            no_blocking_h.append(
-                Constraint(
-                    name,
-                    no_half_connections_validator_h,
-                    no_half_connections_pruner_h,
-                    scope,
-                )
-            )
-
-    # vertical cons
-    no_blocking_v: list[Constraint] = []
-    for i in range(n - 1):
-        for j in range(n):
-            above = variables[i * n + j]
-            below = variables[(i + 1) * n + j]
-            scope = [above, below]
-            name = f"no blocking vertical {i * n + j, (i + 1) * n + j}"
-            no_blocking_v.append(
-                Constraint(
-                    name,
-                    no_half_connections_validator_v,
-                    no_half_connections_pruner_v,
-                    scope,
-                )
-            )
-
-    # add cons
-    no_blocking_cons += no_blocking_h + no_blocking_v
-
-    # create tree constraint
-    tree_con: Constraint = Constraint("tree", tree_validator, tree_pruner, variables)
-
-    connected_con: Constraint = Constraint(
-        "connected", connected_validator, connected_pruner, variables
-    )
-    all_cons = no_blocking_cons + [tree_con, connected_con]
-
-    # create csp
-    csp = CSP("Sewage pAIpes", variables, all_cons)
-
-    # Generate training solutions
+    total_solutions_needed = num_solutions_train + num_solutions_test + args.num_puzzles
     solutions: list[Assignment] = []
     t0 = time.time()
-    csp.gac_all(
-        solutions=solutions,
-        max_solutions=num_solutions_train + num_solutions_test + args.num_puzzles,
-        print_solutions=False,
-        randomize_order=True,
-    )
 
-    if (num_solutions_train + num_solutions_test + args.num_puzzles) > len(solutions):
+    gac_called = 0
+
+    while len(solutions) < total_solutions_needed:
+        # Initialize variables and constraints
+        variables: list[Variable] = []
+
+        # initialize variable objects
+        for i in range(n):
+            row: list[Variable] = []
+            for j in range(n):
+                top = i == 0
+                bottom = i == n - 1
+                left = j == 0
+                right = j == n - 1
+                var = Variable(
+                    location=i * n + j,
+                    domain=DomainGenerator.generate_domain(top, right, bottom, left),
+                )
+                row.append(var)
+            variables += row
+
+        all_cons: list[Constraint] = []
+
+        # create binary constraints for no blocking
+        no_blocking_cons: list[Constraint] = []
+        # start with horizontal cons
+        no_blocking_h: list[Constraint] = []
+        for i in range(n):
+            for j in range(n - 1):
+                left = variables[i * n + j]
+                right = variables[i * n + j + 1]
+                scope = [left, right]
+                name = f"no blocking horizontal {i * n + j, i * n + j + 1}"
+                no_blocking_h.append(
+                    Constraint(
+                        name,
+                        no_half_connections_validator_h,
+                        no_half_connections_pruner_h,
+                        scope,
+                    )
+                )
+
+        # vertical cons
+        no_blocking_v: list[Constraint] = []
+        for i in range(n - 1):
+            for j in range(n):
+                above = variables[i * n + j]
+                below = variables[(i + 1) * n + j]
+                scope = [above, below]
+                name = f"no blocking vertical {i * n + j, (i + 1) * n + j}"
+                no_blocking_v.append(
+                    Constraint(
+                        name,
+                        no_half_connections_validator_v,
+                        no_half_connections_pruner_v,
+                        scope,
+                    )
+                )
+
+        # add cons
+        no_blocking_cons += no_blocking_h + no_blocking_v
+
+        # create tree constraint
+        tree_con: Constraint = Constraint(
+            "tree", tree_validator, tree_pruner, variables
+        )
+
+        connected_con: Constraint = Constraint(
+            "connected", connected_validator, connected_pruner, variables
+        )
+        all_cons = no_blocking_cons + [tree_con, connected_con]
+
+        # create csp
+        csp = CSP("Sewage pAIpes", variables, all_cons)
+
+        # Generate solutions for this CSP instance
+        current_solutions: list[Assignment] = []
+        solutions_needed = min(gac_after_every, total_solutions_needed - len(solutions))
+        csp.gac_all(
+            solutions=current_solutions,
+            max_solutions=solutions_needed,
+            print_solutions=False,
+            randomize_order=True,
+        )
+        gac_called += 1
+
+        # Add only unique solutions
+        for solution in current_solutions:
+            if solution not in solutions:
+                solutions.append(solution)
+                if len(solutions) >= total_solutions_needed:
+                    break
+
+    if len(solutions) < total_solutions_needed:
         raise ValueError(
-            f"Not enough solutions found. Found {len(solutions)} solutions, but {num_solutions_train * num_puzzles_train + num_solutions_test * num_puzzles_test + args.num_puzzles} are needed"
+            f"Not enough unique solutions found. Found {len(solutions)} solutions, but {total_solutions_needed} are needed"
         )
 
     curr_dir = os.path.dirname(__file__)
@@ -197,6 +224,7 @@ def main():
 
     t1 = time.time()
     print(f"Time: {t1 - t0}")
+    print(f"GAC called: {gac_called}")
 
 
 if __name__ == "__main__":
