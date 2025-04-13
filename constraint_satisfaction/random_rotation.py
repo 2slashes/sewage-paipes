@@ -40,6 +40,17 @@ def create_puzzle(solution: Assignment) -> tuple[Assignment, list[int]]:
     return puzzle, pipes_to_rotate
 
 
+def create_challenging_puzzle(solution: Assignment) -> Assignment:
+    """
+    Create a puzzle that the network will eventually play on.
+    Iterate through each pipe and rotate it 0, 1, 2, or 3 times (chosen randomly).
+    """
+    puzzle: Assignment = solution.copy()
+    for index in range(len(solution)):
+        puzzle[index] = clockwise_rotate(puzzle[index], random.randint(0, 3))
+    return puzzle
+
+
 def generate_one_state_str(state: Assignment):
     output = ""
     for pipe in state:
@@ -80,11 +91,11 @@ def write_csv(
 def write_puzzles_csv(solutions: list[Assignment], file_path: str):
     """
     Write a CSV file where first column is the initial puzzle state and second column is the solution state.
-    Each solution is used to create one puzzle by randomly rotating some pipes.
+    This uses the create_challenging_puzzle function to create the puzzle.
     """
     output: list[list[str]] = []
     for solution in solutions:
-        puzzle, _ = create_puzzle(solution)
+        puzzle = create_challenging_puzzle(solution)
         puzzle_str = generate_one_state_str(puzzle)
         solution_str = generate_one_state_str(solution)
         output.append([puzzle_str, solution_str])
