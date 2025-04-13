@@ -31,17 +31,17 @@ while not n_validated:
     print(f"Value of n validated as {n}\n")
     n_validated = True
 
-generate_pddl_str = input(
-    "Would you like to generate PDDL output files and initial/goal state files for these solutions? y/N: "
+generate_csv_str = input(
+    "Would you like to generate CSV output files and initial/goal state files for these solutions? y/N: "
 ).lower()
-should_generate_pddl = (
-    True if generate_pddl_str == "y" or generate_pddl_str == "yes" else False
+should_generate_csv = (
+    True if generate_csv_str == "y" or generate_csv_str == "yes" else False
 )
 print()
 
 num_rotations: int = 0
 rotations_validated = False
-if should_generate_pddl:
+if should_generate_csv:
     # how many rotations
     while not rotations_validated:
         rotations_str = input("Enter the number of rotations for each solution: ")
@@ -78,7 +78,7 @@ while not solutions_validated:
     if max_solutions < 1 and max_solutions != -1:
         print("Number of solutions must be at least 1.")
         continue
-    if max_solutions == -1 and should_generate_pddl:
+    if max_solutions == -1 and should_generate_csv:
         warning_str = input(
             "WARNING: This action could generate a lot of PDDL and state files.\nAre you sure you want an unbounded number of solutions? y/N: "
         ).lower()
@@ -98,7 +98,7 @@ print()
 
 max_num_boards_generated = -1
 if max_solutions != -1:
-    if should_generate_pddl:
+    if should_generate_csv:
         max_num_boards_generated = ceil(max_solutions / num_rotations)
     else:
         max_num_boards_generated = max_solutions
@@ -182,7 +182,7 @@ csp.gac_all(
 )
 t1 = time.time()
 print(f"time: {t1 - t0}")
-if should_generate_pddl:
+if should_generate_csv:
     for solution in solutions_gac:
         random_rotate_board(solution, num_rotations)
 
