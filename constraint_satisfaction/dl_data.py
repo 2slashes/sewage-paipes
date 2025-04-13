@@ -158,6 +158,12 @@ def main():
         print_solutions=False,
         randomize_order=True,
     )
+
+    if (num_solutions_train + num_solutions_test) > len(solutions):
+        raise ValueError(
+            f"Not enough solutions found. Found {len(solutions)} solutions, but {num_solutions_train * num_puzzles_train + num_solutions_test * num_puzzles_test} are needed"
+        )
+
     curr_dir = os.path.dirname(__file__)
     data_dir = os.path.join(curr_dir, "data")
     if not os.path.exists(data_dir):
