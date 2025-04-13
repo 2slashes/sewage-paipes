@@ -75,3 +75,22 @@ def write_csv(
         csv_file.write("state,actions\n")
         for row in output:
             csv_file.write(f"{row[0]},{row[1]}\n")
+
+
+def write_puzzles_csv(solutions: list[Assignment], file_path: str):
+    """
+    Write a CSV file where first column is the initial puzzle state and second column is the solution state.
+    Each solution is used to create one puzzle by randomly rotating some pipes.
+    """
+    output: list[list[str]] = []
+    for solution in solutions:
+        puzzle, _ = create_puzzle(solution)
+        puzzle_str = generate_one_state_str(puzzle)
+        solution_str = generate_one_state_str(solution)
+        output.append([puzzle_str, solution_str])
+
+    with open(file_path, mode="w", newline="") as csv_file:
+        # write the header "initial_state,solution_state"
+        csv_file.write("initial_state,solution_state\n")
+        for row in output:
+            csv_file.write(f"{row[0]},{row[1]}\n")

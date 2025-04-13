@@ -15,7 +15,7 @@ from constraints.connected import (
     pruner as connected_pruner,
 )
 
-from random_rotation import write_csv
+from random_rotation import write_csv, write_puzzles_csv
 
 
 def parse_args():
@@ -49,6 +49,12 @@ def parse_args():
         required=True,
         help="Number of puzzles per solution for test set",
     )
+    parser.add_argument(
+        "--num-puzzles",
+        type=int,
+        required=True,
+        help="Number of puzzles to generate for the network to play",
+    )
 
     args = parser.parse_args()
 
@@ -67,6 +73,9 @@ def parse_args():
 
     if args.puzzles_test < 1:
         parser.error("Number of test puzzles per solution must be at least 1")
+
+    if args.num_puzzles < 1:
+        parser.error("Number of puzzles to generate must be at least 1")
 
     return args
 
@@ -154,14 +163,14 @@ def main():
     t0 = time.time()
     csp.gac_all(
         solutions=solutions,
-        max_solutions=num_solutions_train + num_solutions_test,
+        max_solutions=num_solutions_train + num_solutions_test + args.num_puzzles,
         print_solutions=False,
         randomize_order=True,
     )
 
-    if (num_solutions_train + num_solutions_test) > len(solutions):
+    if (num_solutions_train + num_solutions_test + args.num_puzzles) > len(solutions):
         raise ValueError(
-            f"Not enough solutions found. Found {len(solutions)} solutions, but {num_solutions_train * num_puzzles_train + num_solutions_test * num_puzzles_test} are needed"
+            f"Not enough solutions found. Found {len(solutions)} solutions, but {num_solutions_train * num_puzzles_train + num_solutions_test * num_puzzles_test + args.num_puzzles} are needed"
         )
 
     curr_dir = os.path.dirname(__file__)
@@ -174,9 +183,16 @@ def main():
         os.path.join(data_dir, "train.csv"),
     )
     write_csv(
-        solutions[num_solutions_train:],
+        solutions[num_solutions_train : num_solutions_train + num_solutions_test],
         num_puzzles_test,
         os.path.join(data_dir, "test.csv"),
+    )
+
+    # Generate puzzles for the network to play
+    puzzle_solutions = solutions[num_solutions_train + num_solutions_test :]
+    write_puzzles_csv(
+        puzzle_solutions,
+        os.path.join(data_dir, "puzzles.csv"),
     )
 
     t1 = time.time()
