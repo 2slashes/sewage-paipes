@@ -20,12 +20,15 @@ def clockwise_rotate(pipe: PipeType, n: int) -> PipeType:
     return new_pipe
 
 
-def random_rotate_board(board: Assignment, num_rotations: int) -> list[Assignment]:
+def random_rotate_board(
+    board: Assignment, num_rotations: int, csv_format: str = "actions"
+) -> list[Assignment]:
     """
     Rotates every pipe on a pipes board by either 0, 90, 180, or 270 degrees, at random.
 
     :params board: list of PipeTypes that represents the board to be randomly rotated
     :params num_rotations: number of times to rotate the full board, also the number of new boards that will be returned.
+    :params csv_format: format of CSV output, either "actions" or "goal"
     :returns: list of boards after random rotation.
     """
     new_boards: list[Assignment] = []
@@ -45,12 +48,15 @@ def random_rotate_board(board: Assignment, num_rotations: int) -> list[Assignmen
         # ensure that the random rotation of the board has not been generated already
         if new_board not in new_boards:
             new_boards.append(new_board)
-    generate_solutions(new_boards, board, pipe_rotations)
+    generate_solutions(new_boards, board, pipe_rotations, csv_format)
     return new_boards
 
 
 def generate_solutions(
-    boards: list[Assignment], solution: Assignment, rotation_maps: list[dict[int, int]]
+    boards: list[Assignment],
+    solution: Assignment,
+    rotation_maps: list[dict[int, int]],
+    output_format: str = "actions",
 ):
     curr_dir = os.path.dirname(__file__)
     csv_dir = os.path.join(curr_dir, "../deep_learning/data/")
@@ -70,8 +76,18 @@ def generate_solutions(
     initial_states = []
     for board in boards:
         initial_states.append(generate_one_state_str(board))
-    for n, rotations in enumerate(rotation_maps):
-        output_rotations(initial_states[n], goal_state, rotations, csv_file_name)
+
+    if output_format == "actions":
+        for n, rotations in enumerate(rotation_maps):
+            output_rotations(initial_states[n], goal_state, rotations, csv_file_name)
+    else:  # output_format == "goal"
+        with open(csv_file_name, mode="a", newline="") as csv_file:
+            writer = csv.writer(csv_file)
+            # write the header if the csv file is empty or if it didn't exist
+            if not os.path.exists(csv_file_name) or os.path.getsize(csv_file_name) == 0:
+                writer.writerow(["state", "goal"])
+            for initial_state in initial_states:
+                writer.writerow([initial_state, goal_state])
 
 
 def output_rotations(
