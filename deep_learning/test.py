@@ -10,6 +10,8 @@ class PipesPredictor(nn.Module):
         self.layers = nn.Sequential(
             nn.Linear(input_size, hidden_size),
             nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
             nn.Linear(hidden_size, output_size),
         )
 
@@ -29,7 +31,7 @@ model = PipesPredictor(input_size=4 * (n**2), hidden_size=128, output_size=n**2)
 )
 
 model_file_name = "model.pth"
-curr_dir = os.getcwd()
+curr_dir = os.path.dirname(__file__)
 model_file_path = os.path.join(curr_dir, model_file_name)
 model.load_state_dict(torch.load(model_file_path, weights_only=True))
 model.eval()
@@ -96,6 +98,7 @@ def get_bad_pipes(state, goal):
 
 initials: list[str] = []
 goals: list[str] = []
+min_moves: list[int] = []
 
 puzzle_path = os.path.join(curr_dir, "data/puzzles.csv")
 with open(puzzle_path, newline="") as csvfile:
@@ -105,11 +108,13 @@ with open(puzzle_path, newline="") as csvfile:
     for row in reader:
         initials.append(row[0])
         goals.append(row[1])
+        min_moves.append(int(row[2]))
 
-total_moves = 0
 corrects = 0
 bad_pipes_when_incorrect = []
 all_moves = []
+extra_moves = []
+outlier_moves = []
 
 for i in range(len(initials)):
     initial = initials[i]
@@ -119,30 +124,49 @@ for i in range(len(initials)):
     state = initial
     visited[initial] = set()
     cur_puzzle_moves = 0
+    cur_puzzle_bad_pipes_when_incorrect = []
+    cur_puzzle_corrects = 0
+
     while state != goal:
         move = pick_move(state, visited)
         bad_pipes = get_bad_pipes(state, goal)
         if move in bad_pipes:
-            corrects += 1
+            cur_puzzle_corrects += 1
         else:
-            bad_pipes_when_incorrect.append(len(bad_pipes))
+            cur_puzzle_bad_pipes_when_incorrect.append(len(bad_pipes))
         visited[state].add(move)
         state = pipe_rotate_binary(state, move)
         cur_puzzle_moves += 1
-        total_moves += 1
-        # print(f"Accuracy: {corrects / total_moves}")
-        # if len(bad_pipes_when_incorrect) > 0:
-        #     print(
-        #         f"Average bad pipes when incorrect: {sum(bad_pipes_when_incorrect) / len(bad_pipes_when_incorrect)}"
-        #     )
+        print(f"Solution {i+1}: move {move}")
+
     print(f"Solution {i+1}: {cur_puzzle_moves} moves")
-    all_moves.append(cur_puzzle_moves)
+    if cur_puzzle_moves < 70:
+        if cur_puzzle_moves - min_moves[i] < 0:
+            raise Exception(
+                f"Solution {i+1} has {cur_puzzle_moves} moves, but the minimum number of moves is {min_moves[i]}"
+            )
+        all_moves.append(cur_puzzle_moves)
+        extra_moves.append(cur_puzzle_moves - min_moves[i])
+        bad_pipes_when_incorrect.extend(cur_puzzle_bad_pipes_when_incorrect)
+        corrects += cur_puzzle_corrects
+    else:
+        outlier_moves.append(cur_puzzle_moves)
 
-print("-----------")
-print(f"Accuracy: {corrects / total_moves}")
-print(
-    f"Average bad pipes when incorrect: {sum(bad_pipes_when_incorrect) / len(bad_pipes_when_incorrect)}"
-)
-print(f"Average moves: {total_moves / len(initials)}")
+print("--------------------------------")
+print("Results WITHOUT Outliers")
 
-print(f"Outliers: {[x for x in all_moves if x > 100]}")
+print(f"Accuracy: {corrects / sum(all_moves)}")
+
+if len(bad_pipes_when_incorrect) > 0:
+    print(
+        f"Average bad pipes when incorrect: {sum(bad_pipes_when_incorrect) / len(bad_pipes_when_incorrect)}"
+    )
+else:
+    print("No incorrect moves on non-outliers!!!")
+
+print(f"Average extra moves: {sum(extra_moves) / len(extra_moves)}")
+
+print(f"Average moves: {sum(all_moves) / len(all_moves)}")
+
+print("--------------------------------")
+print(f"{len(outlier_moves)} Outliers: {outlier_moves}")

@@ -64,15 +64,29 @@ def create_puzzle(solution: Assignment) -> tuple[Assignment, list[int]]:
     return puzzle, pipes_to_rotate
 
 
-def create_challenging_puzzle(solution: Assignment) -> Assignment:
+def create_challenging_puzzle(solution: Assignment) -> tuple[Assignment, int]:
     """
     Create a puzzle that the network will eventually play on.
     Iterate through each pipe and rotate it 0, 1, 2, or 3 times (chosen randomly).
+    :returns: A tuple of (puzzle, min_moves_to_solve)
     """
+    print(f"Solution: {generate_one_state_str(solution)}")
     puzzle: Assignment = solution.copy()
+    min_moves_to_solve = 0
     for index in range(len(solution)):
-        puzzle[index] = clockwise_rotate(puzzle[index], random.randint(0, 3))
-    return puzzle
+        rotations = random.randint(0, 3)
+        puzzle[index] = clockwise_rotate(puzzle[index], rotations)
+        if puzzle[index] == (True, False, True, False) or puzzle[index] == (
+            False,
+            True,
+            False,
+            True,
+        ):
+            min_moves_to_solve += rotations % 2
+        else:
+            min_moves_to_solve += (4 - rotations) % 4
+        print(f"Rotated pipe {index} {rotations} times")
+    return puzzle, min_moves_to_solve
 
 
 def generate_one_state_str(state: Assignment):
@@ -119,13 +133,13 @@ def write_puzzles_csv(solutions: list[Assignment], file_path: str):
     """
     output: list[list[str]] = []
     for solution in solutions:
-        puzzle = create_challenging_puzzle(solution)
+        puzzle, min_moves_to_solve = create_challenging_puzzle(solution)
         puzzle_str = generate_one_state_str(puzzle)
         solution_str = generate_one_state_str(solution)
-        output.append([puzzle_str, solution_str])
+        output.append([puzzle_str, solution_str, str(min_moves_to_solve)])
 
     with open(file_path, mode="w", newline="") as csv_file:
         # write the header "initial_state,solution_state"
-        csv_file.write("initial_state,solution_state\n")
+        csv_file.write("initial_state,solution_state,min_moves_to_solve\n")
         for row in output:
-            csv_file.write(f"{row[0]},{row[1]}\n")
+            csv_file.write(f"{row[0]},{row[1]},{row[2]}\n")
