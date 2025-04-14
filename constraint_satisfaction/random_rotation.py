@@ -70,7 +70,6 @@ def create_challenging_puzzle(solution: Assignment) -> tuple[Assignment, int]:
     Iterate through each pipe and rotate it 0, 1, 2, or 3 times (chosen randomly).
     :returns: A tuple of (puzzle, min_moves_to_solve)
     """
-    print(f"Solution: {generate_one_state_str(solution)}")
     puzzle: Assignment = solution.copy()
     min_moves_to_solve = 0
     for index in range(len(solution)):
@@ -85,7 +84,6 @@ def create_challenging_puzzle(solution: Assignment) -> tuple[Assignment, int]:
             min_moves_to_solve += rotations % 2
         else:
             min_moves_to_solve += (4 - rotations) % 4
-        print(f"Rotated pipe {index} {rotations} times")
     return puzzle, min_moves_to_solve
 
 
