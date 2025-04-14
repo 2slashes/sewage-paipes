@@ -114,7 +114,12 @@ corrects = 0
 bad_pipes_when_incorrect = []
 all_moves = []
 extra_moves = []
-outlier_moves = []
+
+outlier_corrects = 0
+outlier_bad_pipes_when_incorrect = []
+outlier_all_moves = []
+outlier_extra_moves = []
+
 
 for i in range(len(initials)):
     initial = initials[i]
@@ -140,20 +145,27 @@ for i in range(len(initials)):
         print(f"Solution {i+1}: move {move}")
 
     print(f"Solution {i+1}: {cur_puzzle_moves} moves")
+
+    if cur_puzzle_moves - min_moves[i] < 0:
+        raise Exception(
+            f"Solution {i+1} has {cur_puzzle_moves} moves, but the minimum number of moves is {min_moves[i]}"
+        )
+
     if cur_puzzle_moves < 70:
-        if cur_puzzle_moves - min_moves[i] < 0:
-            raise Exception(
-                f"Solution {i+1} has {cur_puzzle_moves} moves, but the minimum number of moves is {min_moves[i]}"
-            )
         all_moves.append(cur_puzzle_moves)
         extra_moves.append(cur_puzzle_moves - min_moves[i])
         bad_pipes_when_incorrect.extend(cur_puzzle_bad_pipes_when_incorrect)
         corrects += cur_puzzle_corrects
     else:
-        outlier_moves.append(cur_puzzle_moves)
+        outlier_all_moves.append(cur_puzzle_moves)
+        outlier_extra_moves.append(cur_puzzle_moves - min_moves[i])
+        outlier_bad_pipes_when_incorrect.extend(cur_puzzle_bad_pipes_when_incorrect)
+        outlier_corrects += cur_puzzle_corrects
+
 
 print("--------------------------------")
 print("Results WITHOUT Outliers")
+print()
 
 print(f"Accuracy: {corrects / sum(all_moves)}")
 
@@ -169,4 +181,20 @@ print(f"Average extra moves: {sum(extra_moves) / len(extra_moves)}")
 print(f"Average moves: {sum(all_moves) / len(all_moves)}")
 
 print("--------------------------------")
-print(f"{len(outlier_moves)} Outliers: {outlier_moves}")
+print("OUTLIER RESULTS")
+print()
+
+print(f"{len(outlier_all_moves)} Outliers: {outlier_all_moves}")
+
+print(f"Accuracy: {outlier_corrects / sum(outlier_all_moves)}")
+
+if len(outlier_bad_pipes_when_incorrect) > 0:
+    print(
+        f"Average bad pipes when incorrect: {sum(outlier_bad_pipes_when_incorrect) / len(outlier_bad_pipes_when_incorrect)}"
+    )
+else:
+    print("No incorrect moves on outliers!!!")
+
+print(f"Average extra moves: {sum(outlier_extra_moves) / len(outlier_extra_moves)}")
+
+print(f"Average moves: {sum(outlier_all_moves) / len(outlier_all_moves)}")
