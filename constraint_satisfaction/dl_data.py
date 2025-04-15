@@ -113,7 +113,8 @@ def parse_args():
 def augment_data(num_puzzles_per_goal: int):
     """
     Augment data from outliers.csv by generating puzzles for each goal state.
-    For each goal, splits the generated puzzles 75/25 between train and test sets.
+    For each goal, generates num_puzzles_per_goal puzzles using the same logic as write_csv in random_rotation.py.
+    Splits the generated puzzles 75/25 between train and test sets and writes them to train.csv and test.csv, respectively.
     """
     curr_dir = os.path.dirname(__file__)
     data_dir = os.path.join(curr_dir, "../deep_learning/data")
@@ -140,40 +141,33 @@ def augment_data(num_puzzles_per_goal: int):
                 goal.append(pipe)
             goals.append(goal)
 
-    # Calculate split points
-    num_train_puzzles = int(num_puzzles_per_goal * 0.75)
-
-    # Generate puzzles for each goal and split them
     train_data = []
     test_data = []
 
     for goal in goals:
-        # Generate all puzzles for this goal
-        low_goal_puzzles_labels: list[tuple[str, str]] = []
-        high_goal_puzzles_labels: list[tuple[str, str]] = []
-        low = 0.75
-        num_low_puzzles = int(num_puzzles_per_goal * low)
-        num_high_puzzles = num_puzzles_per_goal - num_low_puzzles
-        for _ in range(num_low_puzzles):
-            puzzle, label = create_puzzle(
-                goal, random.randint(1, int(math.sqrt(len(goal))))
+        puzzles_labels = []
+        for _ in range(num_puzzles_per_goal):
+            puzzle_str, label = create_puzzle(
+                goal, max(1, round((2 * random.random()) ** 4))
             )
-            low_goal_puzzles_labels.append((puzzle, label))
-        for _ in range(num_high_puzzles):
-            puzzle, label = create_puzzle(goal, random.randint(1, len(goal)))
-            high_goal_puzzles_labels.append((puzzle, label))
+            puzzles_labels.append((puzzle_str, label))
+        # Split 75/25
+        split_idx = int(len(puzzles_labels) * 0.75)
+        train_data.extend(puzzles_labels[:split_idx])
+        test_data.extend(puzzles_labels[split_idx:])
 
-    # Append to existing CSV files
     train_file = os.path.join(data_dir, "train.csv")
     test_file = os.path.join(data_dir, "test.csv")
 
-    # Write train data
-    with open(train_file, "a") as f:
+    # Write train data (overwrite, not append)
+    with open(train_file, "w") as f:
+        f.write("state,actions\n")
         for puzzle, label in train_data:
             f.write(f"{puzzle},{label}\n")
 
-    # Write test data
-    with open(test_file, "a") as f:
+    # Write test data (overwrite, not append)
+    with open(test_file, "w") as f:
+        f.write("state,actions\n")
         for puzzle, label in test_data:
             f.write(f"{puzzle},{label}\n")
 
