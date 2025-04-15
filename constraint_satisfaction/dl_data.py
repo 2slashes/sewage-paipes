@@ -1,4 +1,6 @@
+import math
 import os
+import random
 import time
 import argparse
 from csp import Variable, Constraint, CSP, DomainGenerator
@@ -14,45 +16,41 @@ from constraints.connected import (
     validator as connected_validator,
     pruner as connected_pruner,
 )
-
-from random_rotation import write_csv, write_puzzles_csv
+from random_rotation import (
+    write_csv,
+    write_puzzles_csv,
+    create_puzzle,
+)
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Generate training and test data for Sewage pAIpes puzzle"
     )
-    parser.add_argument(
-        "-n", "--size", type=int, required=True, help="Board dimension size (2-25)"
-    )
+    parser.add_argument("-n", "--size", type=int, help="Board dimension size (2-25)")
     parser.add_argument(
         "--solutions-train",
         type=int,
-        required=True,
         help="Number of solutions for the training set",
     )
     parser.add_argument(
         "--puzzles-train",
         type=int,
-        required=True,
         help="Number of puzzles per solution for training set",
     )
     parser.add_argument(
         "--solutions-test",
         type=int,
-        required=True,
         help="Number of solutions for the test set",
     )
     parser.add_argument(
         "--puzzles-test",
         type=int,
-        required=True,
         help="Number of puzzles per solution for test set",
     )
     parser.add_argument(
         "--num-puzzles",
         type=int,
-        required=True,
         help="Number of puzzles to generate for the network to play",
     )
     parser.add_argument(
@@ -61,36 +59,132 @@ def parse_args():
         default=4,
         help="Number of solutions to generate before creating a new CSP instance",
     )
+    parser.add_argument(
+        "--aug",
+        action="store_true",
+        help="Run in augmentation mode using outliers.csv",
+    )
+    parser.add_argument(
+        "--puzzles",
+        type=int,
+        help="Number of puzzles to generate per goal in augmentation mode",
+    )
 
     args = parser.parse_args()
 
-    # Validate arguments
-    if args.size < 2 or args.size > 25:
-        parser.error("Board size must be between 2 and 25")
+    if args.aug:
+        if not args.puzzles:
+            parser.error("--puzzles is required in augmentation mode")
+        if args.puzzles < 1:
+            parser.error("Number of puzzles must be at least 1")
+    else:
+        # Validate arguments for normal mode
+        if not args.size:
+            parser.error("--size is required in normal mode")
+        if args.size < 2 or args.size > 25:
+            parser.error("Board size must be between 2 and 25")
+        if not args.solutions_train:
+            parser.error("--solutions-train is required in normal mode")
+        if not args.puzzles_train:
+            parser.error("--puzzles-train is required in normal mode")
+        if not args.solutions_test:
+            parser.error("--solutions-test is required in normal mode")
+        if not args.puzzles_test:
+            parser.error("--puzzles-test is required in normal mode")
+        if not args.num_puzzles:
+            parser.error("--num-puzzles is required in normal mode")
+        if args.gac_after_every < 1:
+            parser.error("Number of solutions before new GAC must be at least 1")
 
-    if args.solutions_train < 1:
-        parser.error("Number of training solutions must be at least 1")
-
-    if args.puzzles_train < 1:
-        parser.error("Number of training puzzles per solution must be at least 1")
-
-    if args.solutions_test < 1:
-        parser.error("Number of test solutions must be at least 1")
-
-    if args.puzzles_test < 1:
-        parser.error("Number of test puzzles per solution must be at least 1")
-
-    if args.num_puzzles < 1:
-        parser.error("Number of puzzles to generate must be at least 1")
-
-    if args.gac_after_every < 1:
-        parser.error("Number of solutions before new GAC must be at least 1")
+        if args.solutions_train < 0:
+            parser.error("Number of training solutions cannot be negative")
+        if args.puzzles_train < 0:
+            parser.error("Number of training puzzles per solution cannot be negative")
+        if args.solutions_test < 0:
+            parser.error("Number of test solutions cannot be negative")
+        if args.puzzles_test < 0:
+            parser.error("Number of test puzzles per solution cannot be negative")
+        if args.num_puzzles < 0:
+            parser.error("Number of puzzles to generate cannot be negative")
 
     return args
 
 
+def augment_data(num_puzzles_per_goal: int):
+    """
+    Augment data from outliers.csv by generating puzzles for each goal state.
+    For each goal, splits the generated puzzles 75/25 between train and test sets.
+    """
+    curr_dir = os.path.dirname(__file__)
+    data_dir = os.path.join(curr_dir, "../deep_learning/data")
+    outliers_file = os.path.join(data_dir, "outliers.csv")
+
+    if not os.path.exists(outliers_file):
+        raise FileNotFoundError(f"outliers.csv not found in {data_dir}")
+
+    # Read goals from outliers.csv
+    goals = []
+    with open(outliers_file, "r") as f:
+        next(f)  # Skip header
+        for line in f:
+            goal_str = line.strip()
+            # Convert binary string to Assignment
+            goal = []
+            for i in range(0, len(goal_str), 4):
+                pipe = (
+                    goal_str[i] == "1",
+                    goal_str[i + 1] == "1",
+                    goal_str[i + 2] == "1",
+                    goal_str[i + 3] == "1",
+                )
+                goal.append(pipe)
+            goals.append(goal)
+
+    # Calculate split points
+    num_train_puzzles = int(num_puzzles_per_goal * 0.75)
+
+    # Generate puzzles for each goal and split them
+    train_data = []
+    test_data = []
+
+    for goal in goals:
+        # Generate all puzzles for this goal
+        low_goal_puzzles_labels: list[tuple[str, str]] = []
+        high_goal_puzzles_labels: list[tuple[str, str]] = []
+        low = 0.75
+        num_low_puzzles = int(num_puzzles_per_goal * low)
+        num_high_puzzles = num_puzzles_per_goal - num_low_puzzles
+        for _ in range(num_low_puzzles):
+            puzzle, label = create_puzzle(
+                goal, random.randint(1, int(math.sqrt(len(goal))))
+            )
+            low_goal_puzzles_labels.append((puzzle, label))
+        for _ in range(num_high_puzzles):
+            puzzle, label = create_puzzle(goal, random.randint(1, len(goal)))
+            high_goal_puzzles_labels.append((puzzle, label))
+
+    # Append to existing CSV files
+    train_file = os.path.join(data_dir, "train.csv")
+    test_file = os.path.join(data_dir, "test.csv")
+
+    # Write train data
+    with open(train_file, "a") as f:
+        for puzzle, label in train_data:
+            f.write(f"{puzzle},{label}\n")
+
+    # Write test data
+    with open(test_file, "a") as f:
+        for puzzle, label in test_data:
+            f.write(f"{puzzle},{label}\n")
+
+
 def main():
     args = parse_args()
+
+    if args.aug:
+        augment_data(args.puzzles)
+        return
+
     n = args.size
     num_solutions_train = args.solutions_train
     num_puzzles_train = args.puzzles_train
@@ -204,23 +298,32 @@ def main():
     data_dir = os.path.join(curr_dir, "../deep_learning/data")
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
-    write_csv(
-        solutions[:num_solutions_train],
-        num_puzzles_train,
-        os.path.join(data_dir, "train.csv"),
-    )
-    write_csv(
-        solutions[num_solutions_train : num_solutions_train + num_solutions_test],
-        num_puzzles_test,
-        os.path.join(data_dir, "test.csv"),
-    )
 
-    # Generate puzzles for the network to play
+    # Only write training CSV if there are training solutions
+    if num_solutions_train > 0:
+        write_csv(
+            solutions[:num_solutions_train],
+            num_puzzles_train,
+            os.path.join(data_dir, "train.csv"),
+            lows=0.9,
+        )
+
+    # Only write test CSV if there are test solutions
+    if num_solutions_test > 0:
+        write_csv(
+            solutions[num_solutions_train : num_solutions_train + num_solutions_test],
+            num_puzzles_test,
+            os.path.join(data_dir, "test.csv"),
+            lows=0.9,
+        )
+
+    # Only write puzzles CSV if there are puzzle solutions
     puzzle_solutions = solutions[num_solutions_train + num_solutions_test :]
-    write_puzzles_csv(
-        puzzle_solutions,
-        os.path.join(data_dir, "puzzles.csv"),
-    )
+    if len(puzzle_solutions) > 0:
+        write_puzzles_csv(
+            puzzle_solutions,
+            os.path.join(data_dir, "puzzles.csv"),
+        )
 
     t1 = time.time()
     print(f"Time: {t1 - t0}")

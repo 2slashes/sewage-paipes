@@ -43,37 +43,44 @@ def clockwise_rotate(pipe: PipeType, n: int) -> PipeType:
     return new_pipe
 
 
-def create_puzzle(solution: Assignment) -> tuple[Assignment, list[int]]:
+def create_puzzle(solution: Assignment, k: int) -> tuple[str, str]:
     """
-    Create a puzzle from a solution by randomly selecting a number k
-    between 1 and sqrt(len(solution)). Then, randomly select k pipes in the solution
-    to rotate. When a pipe is chosen for rotation, the number of rotation is a random
-    number between 1 and 3.
+    Create a puzzle from a solution by randomly selecting k pipes
+    to rotate. The number of rotations is a random number between 1 and 3.
     :params solution: The solution to create a puzzle from
-    :returns: A tuple of (puzzle, incorrect_pipes_indicies)
+    :params k: The number of pipes to rotate
+    :returns: A tuple of (puzzle, label)
     """
     puzzle: Assignment = solution.copy()
     # get index of pipes to rotate
     pipes_to_rotate: list[int] = random.sample(
         [i for i in range(len(solution))],
-        k=random.randint(1, int(math.sqrt(len(solution)))),
+        k=k,
     )
     # rotate the pipes
     for index in pipes_to_rotate:
         puzzle[index] = clockwise_rotate(puzzle[index], random.randint(1, 3))
-    return puzzle, pipes_to_rotate
+
+    label: list[str] = ["0"] * len(solution)
+    for index in pipes_to_rotate:
+        label[index] = "1"
+    return generate_one_state_str(puzzle), "".join(label)
 
 
-def create_challenging_puzzle(solution: Assignment) -> tuple[Assignment, int]:
+def create_challenging_puzzle(solution: Assignment) -> tuple[str, str, str]:
     """
-    Create a puzzle that the network will eventually play on.
+    Create a puzzle that the network will eventually play on. This is more scrambled.
+    This is also used for data augmentation.
     Iterate through each pipe and rotate it 0, 1, 2, or 3 times (chosen randomly).
-    :returns: A tuple of (puzzle, min_moves_to_solve)
+    :returns: A tuple of (puzzle, label, min_moves_to_solve)
     """
     puzzle: Assignment = solution.copy()
+    label: list[str] = ["0"] * len(solution)
     min_moves_to_solve = 0
     for index in range(len(solution)):
         rotations = random.randint(0, 3)
+        if rotations > 0:
+            label[index] = "1"
         puzzle[index] = clockwise_rotate(puzzle[index], rotations)
         if puzzle[index] == (True, False, True, False) or puzzle[index] == (
             False,
@@ -84,7 +91,7 @@ def create_challenging_puzzle(solution: Assignment) -> tuple[Assignment, int]:
             min_moves_to_solve += rotations % 2
         else:
             min_moves_to_solve += (4 - rotations) % 4
-    return puzzle, min_moves_to_solve
+    return generate_one_state_str(puzzle), "".join(label), str(min_moves_to_solve)
 
 
 def generate_one_state_str(state: Assignment):
@@ -99,24 +106,31 @@ def generate_one_state_str(state: Assignment):
 
 
 def write_csv(
-    solutions: list[Assignment], num_puzzles_per_solution: int, file_path: str
+    solutions: list[Assignment],
+    num_puzzles_per_solution: int,
+    file_path: str,
+    lows: float,
 ):
     """
     Write a CSV file where first column is the puzzle and second column represents
     which pipes to rotate to get to the solution.
+
+    :params lows: The proportion of the puzzles per solution that would have sqrt(len(solution)) pipes to rotate or less
     """
     output: list[list[str]] = []
     for solution in solutions:
-        for _ in range(num_puzzles_per_solution):
-            puzzle, pipes_to_rotate = create_puzzle(solution)
-            puzzle_str = generate_one_state_str(puzzle)
-
-            # create binary string of which pipes to rotate. 1 if the pipe is in the incorrect_pipes list, 0 otherwise
-            label = ["0"] * len(solutions[0])
-            for index in pipes_to_rotate:
-                label[index] = "1"
-
-            output.append([puzzle_str, "".join(label)])
+        num_low_puzzles = int(num_puzzles_per_solution * lows)
+        num_high_puzzles = num_puzzles_per_solution - num_low_puzzles
+        for _ in range(num_low_puzzles):
+            puzzle_str, label = create_puzzle(
+                solution, random.randint(1, int(math.sqrt(len(solution))))
+            )
+            output.append([puzzle_str, label])
+        for _ in range(num_high_puzzles):
+            puzzle_str, label = create_puzzle(
+                solution, random.randint(1, len(solution) // 2)
+            )
+            output.append([puzzle_str, label])
     with open(file_path, mode="w", newline="") as csv_file:
         # write the header "state,actions"
         csv_file.write("state,actions\n")
@@ -131,10 +145,8 @@ def write_puzzles_csv(solutions: list[Assignment], file_path: str):
     """
     output: list[list[str]] = []
     for solution in solutions:
-        puzzle, min_moves_to_solve = create_challenging_puzzle(solution)
-        puzzle_str = generate_one_state_str(puzzle)
-        solution_str = generate_one_state_str(solution)
-        output.append([puzzle_str, solution_str, str(min_moves_to_solve)])
+        puzzle_str, label, min_moves_to_solve = create_challenging_puzzle(solution)
+        output.append([puzzle_str, label, min_moves_to_solve])
 
     with open(file_path, mode="w", newline="") as csv_file:
         # write the header "initial_state,solution_state"
