@@ -305,7 +305,6 @@ def main():
             solutions[:num_solutions_train],
             num_puzzles_train,
             os.path.join(data_dir, "train.csv"),
-            lows=0.9,
         )
 
     # Only write test CSV if there are test solutions
@@ -314,7 +313,6 @@ def main():
             solutions[num_solutions_train : num_solutions_train + num_solutions_test],
             num_puzzles_test,
             os.path.join(data_dir, "test.csv"),
-            lows=0.9,
         )
 
     # Only write puzzles CSV if there are puzzle solutions

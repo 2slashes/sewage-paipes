@@ -113,7 +113,6 @@ def write_csv(
     solutions: list[Assignment],
     num_puzzles_per_solution: int,
     file_path: str,
-    lows: float,
 ):
     """
     Write a CSV file where first column is the puzzle and second column represents
@@ -123,16 +122,9 @@ def write_csv(
     """
     output: list[list[str]] = []
     for solution in solutions:
-        num_low_puzzles = int(num_puzzles_per_solution * lows)
-        num_high_puzzles = num_puzzles_per_solution - num_low_puzzles
-        for _ in range(num_low_puzzles):
+        for _ in range(num_puzzles_per_solution):
             puzzle_str, label = create_puzzle(
-                solution, random.randint(1, int(math.sqrt(len(solution))))
-            )
-            output.append([puzzle_str, label])
-        for _ in range(num_high_puzzles):
-            puzzle_str, label = create_puzzle(
-                solution, random.randint(1, len(solution) // 2)
+                solution, max(1, round((2 * random.random()) ** 4))
             )
             output.append([puzzle_str, label])
     with open(file_path, mode="w", newline="") as csv_file:
