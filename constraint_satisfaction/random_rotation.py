@@ -72,15 +72,15 @@ def create_challenging_puzzle(solution: Assignment) -> tuple[str, str, str]:
     Create a puzzle that the network will eventually play on. This is more scrambled.
     This is also used for data augmentation.
     Iterate through each pipe and rotate it 0, 1, 2, or 3 times (chosen randomly).
-    :returns: A tuple of (puzzle, label, min_moves_to_solve)
+    :returns: A tuple of (puzzle, bad_pipe_indices, min_moves_to_solve)
     """
     puzzle: Assignment = solution.copy()
-    label: list[str] = ["0"] * len(solution)
+    bad_pipe_indices: list[str] = ["0"] * len(solution)
     min_moves_to_solve = 0
     for index in range(len(solution)):
         rotations = random.randint(0, 3)
         if rotations > 0:
-            label[index] = "1"
+            bad_pipe_indices[index] = "1"
         puzzle[index] = clockwise_rotate(puzzle[index], rotations)
         if puzzle[index] == (True, False, True, False) or puzzle[index] == (
             False,
@@ -91,7 +91,11 @@ def create_challenging_puzzle(solution: Assignment) -> tuple[str, str, str]:
             min_moves_to_solve += rotations % 2
         else:
             min_moves_to_solve += (4 - rotations) % 4
-    return generate_one_state_str(puzzle), "".join(label), str(min_moves_to_solve)
+    return (
+        generate_one_state_str(puzzle),
+        "".join(bad_pipe_indices),
+        str(min_moves_to_solve),
+    )
 
 
 def generate_one_state_str(state: Assignment):
@@ -145,8 +149,10 @@ def write_puzzles_csv(solutions: list[Assignment], file_path: str):
     """
     output: list[list[str]] = []
     for solution in solutions:
-        puzzle_str, label, min_moves_to_solve = create_challenging_puzzle(solution)
-        output.append([puzzle_str, label, min_moves_to_solve])
+        puzzle_str, _, min_moves_to_solve = create_challenging_puzzle(solution)
+        output.append(
+            [puzzle_str, generate_one_state_str(solution), min_moves_to_solve]
+        )
 
     with open(file_path, mode="w", newline="") as csv_file:
         # write the header "initial_state,solution_state"
