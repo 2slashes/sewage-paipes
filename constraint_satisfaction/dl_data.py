@@ -79,19 +79,19 @@ def parse_args():
             parser.error("Number of puzzles must be at least 1")
     else:
         # Validate arguments for normal mode
-        if not args.size:
+        if args.size is None:
             parser.error("--size is required in normal mode")
         if args.size < 2 or args.size > 25:
             parser.error("Board size must be between 2 and 25")
-        if not args.solutions_train:
+        if args.solutions_train is None:
             parser.error("--solutions-train is required in normal mode")
-        if not args.puzzles_train:
+        if args.puzzles_train is None:
             parser.error("--puzzles-train is required in normal mode")
-        if not args.solutions_test:
+        if args.solutions_test is None:
             parser.error("--solutions-test is required in normal mode")
-        if not args.puzzles_test:
+        if args.puzzles_test is None:
             parser.error("--puzzles-test is required in normal mode")
-        if not args.num_puzzles:
+        if args.num_puzzles is None:
             parser.error("--num-puzzles is required in normal mode")
         if args.gac_after_every < 1:
             parser.error("Number of solutions before new GAC must be at least 1")
