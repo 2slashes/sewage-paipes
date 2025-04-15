@@ -121,7 +121,8 @@ def augment_data():
     with open(outliers_file, "r") as f:
         next(f)  # Skip header
         for line in f:
-            goal_str, moves_str = line.strip().split(",")
+            # Split into initial_state, solution_state, extra_moves
+            _, goal_str, _, moves_str = line.strip().split(",")
             # Convert binary string to Assignment
             goal = []
             for i in range(0, len(goal_str), 4):
