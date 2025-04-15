@@ -64,19 +64,11 @@ def parse_args():
         action="store_true",
         help="Run in augmentation mode using outliers.csv",
     )
-    parser.add_argument(
-        "--puzzles",
-        type=int,
-        help="Number of puzzles to generate per goal in augmentation mode",
-    )
 
     args = parser.parse_args()
 
     if args.aug:
-        if not args.puzzles:
-            parser.error("--puzzles is required in augmentation mode")
-        if args.puzzles < 1:
-            parser.error("Number of puzzles must be at least 1")
+        pass
     else:
         # Validate arguments for normal mode
         if args.size is None:
@@ -110,10 +102,10 @@ def parse_args():
     return args
 
 
-def augment_data(num_puzzles_per_goal: int):
+def augment_data():
     """
     Augment data from outliers.csv by generating puzzles for each goal state.
-    For each goal, generates num_puzzles_per_goal puzzles using the same logic as write_csv in random_rotation.py.
+    For each goal, generates sqrt(extra_moves) puzzles using the same logic as write_csv in random_rotation.py.
     Splits the generated puzzles 75/25 between train and test sets and writes them to train.csv and test.csv, respectively.
     """
     curr_dir = os.path.dirname(__file__)
@@ -123,12 +115,13 @@ def augment_data(num_puzzles_per_goal: int):
     if not os.path.exists(outliers_file):
         raise FileNotFoundError(f"outliers.csv not found in {data_dir}")
 
-    # Read goals from outliers.csv
+    # Read goals and extra_moves from outliers.csv
     goals = []
+    extra_moves = []
     with open(outliers_file, "r") as f:
         next(f)  # Skip header
         for line in f:
-            goal_str = line.strip()
+            goal_str, moves_str = line.strip().split(",")
             # Convert binary string to Assignment
             goal = []
             for i in range(0, len(goal_str), 4):
@@ -140,13 +133,15 @@ def augment_data(num_puzzles_per_goal: int):
                 )
                 goal.append(pipe)
             goals.append(goal)
+            extra_moves.append(int(moves_str))
 
     train_data = []
     test_data = []
 
-    for goal in goals:
+    for goal, moves in zip(goals, extra_moves):
         puzzles_labels = []
-        for _ in range(num_puzzles_per_goal):
+        num_puzzles = max(1, round(math.sqrt(moves)))  # At least 1 puzzle per goal
+        for _ in range(num_puzzles):
             puzzle_str, label = create_puzzle(
                 goal, max(1, round((2 * random.random()) ** 4))
             )
@@ -176,7 +171,7 @@ def main():
     args = parse_args()
 
     if args.aug:
-        augment_data(args.puzzles)
+        augment_data()
         return
 
     n = args.size
