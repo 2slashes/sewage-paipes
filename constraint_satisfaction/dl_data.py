@@ -141,7 +141,7 @@ def augment_data():
 
     for goal, moves in zip(goals, extra_moves):
         puzzles_labels = []
-        num_puzzles = max(1, round(math.sqrt(moves)))  # At least 1 puzzle per goal
+        num_puzzles = max(1, round(math.sqrt(moves))) * 5  # At least 1 puzzle per goal
         for _ in range(num_puzzles):
             puzzle_str, label = create_puzzle(
                 goal, max(1, round((2 * random.random()) ** 4))
