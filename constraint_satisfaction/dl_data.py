@@ -155,14 +155,12 @@ def augment_data():
     train_file = os.path.join(data_dir, "train.csv")
     test_file = os.path.join(data_dir, "test.csv")
 
-    # Write train data (overwrite, not append)
-    with open(train_file, "w") as f:
+    with open(train_file, "a") as f:
         f.write("state,actions\n")
         for puzzle, label in train_data:
             f.write(f"{puzzle},{label}\n")
 
-    # Write test data (overwrite, not append)
-    with open(test_file, "w") as f:
+    with open(test_file, "a") as f:
         f.write("state,actions\n")
         for puzzle, label in test_data:
             f.write(f"{puzzle},{label}\n")
