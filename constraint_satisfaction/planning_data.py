@@ -94,11 +94,6 @@ def generate_all_pddl_and_state_files(
             )
             with open(f"{pddl_dir}problem{cur_num_files}.pddl", "w") as file:
                 file.write(pddl)
-            # generate a state file, which contains a binary representation of the initial state of the puzzle, for each initial state
-            state_str: str = generate_state_str(variation, solution)
-            with open(f"{state_dir}state{cur_num_files}", "w") as file:
-                file.write(state_str)
-            cur_num_files += 1
 
 
 def generate_pddl(
@@ -179,31 +174,6 @@ def generate_pddl_pipes_goal(goal_state: Assignment) -> str:
                 if dir == 3:
                     output += f"            (open-left p{i})\n"
     output += "        )"
-    return output
-
-
-def generate_state_str(initial_state: Assignment, goal_state: Assignment):
-    """
-    Generates a string that matches a binary representation of an initial state and goal state for a pipes problem.
-
-    :params initial_state: The initial state to match
-    :params goal_state: The goal state to match
-    """
-    output = ""
-    for pipe in initial_state:
-        for dir in range(4):
-            if pipe[dir]:
-                output += "1"
-            else:
-                output += "0"
-    output += "\n"
-    for pipe in goal_state:
-        for dir in range(4):
-            if pipe[dir]:
-                output += "1"
-            else:
-                output += "0"
-
     return output
 
 
