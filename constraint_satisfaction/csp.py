@@ -1,60 +1,8 @@
 from math import sqrt
 import random
 from pipes_utils import find_adj
-from pipe_typings import PipeType, Assignment
+from pipes_utils import PipeType, Assignment, print_pipes_grid
 from typing import Optional, Callable
-from print_pipes import print_pipes_grid
-
-
-class DomainGenerator:
-    # all the possible domains for pipes in the pipes puzzle
-    # (True, True, True, True) and (False, False, False, False) are omitted - they represent all connections or no connections, which are immune to rotations.
-    all_domain: list[PipeType] = [
-        (True, True, True, False),
-        (True, True, False, True),
-        (True, True, False, False),
-        (True, False, True, True),
-        (True, False, True, False),
-        (True, False, False, True),
-        (True, False, False, False),
-        (False, True, True, True),
-        (False, True, True, False),
-        (False, True, False, True),
-        (False, True, False, False),
-        (False, False, True, True),
-        (False, False, True, False),
-        (False, False, False, True),
-    ]
-
-    @staticmethod
-    def generate_domain(
-        top: bool, right: bool, bottom: bool, left: bool
-    ) -> list[PipeType]:
-        """
-        Generate a domain based on the four boolean flags:
-        if i == 0: 0 is false (top)
-        if i == n-1: 2 is false (bottom)
-
-        if j == 0: 3 is false (left)
-        if j == n-1: 1 is false (right)
-
-        :param top: A boolean indicating if the top of the pipe is blocked.
-        :param right: A boolean indicating if the right of the pipe is blocked.
-        :param bottom: A boolean indicating if the bottom of the pipe is blocked.
-        :param left: A boolean indicating if the left of the pipe is blocked.
-        :return: A list of PipeType objects representing the domain.
-
-        """
-        domain = DomainGenerator.all_domain.copy()
-        if top:
-            domain = [pipe for pipe in domain if not pipe[0]]
-        if bottom:
-            domain = [pipe for pipe in domain if not pipe[2]]
-        if right:
-            domain = [pipe for pipe in domain if not pipe[1]]
-        if left:
-            domain = [pipe for pipe in domain if not pipe[3]]
-        return domain
 
 
 class Variable:
@@ -584,10 +532,10 @@ class CSP:
 
     def gac_all(
         self,
-        solutions: list[Assignment],
+        solutions: set[tuple[PipeType, ...]],
         max_solutions: int = -1,
         print_solutions: bool = False,
-        randomize_order: bool = False,
+        random_start: bool = False,
     ) -> int:
         """
         Finds all solutions to the csp using generalized arc consistency. Solutions will be stored in the solutions list that is passed in as a parameter.
@@ -604,7 +552,7 @@ class CSP:
         # check if all variables in the csp have been assigned
         if not self.unassigned_vars:
             curr_assignment = self.get_assignment()
-            if curr_assignment not in solutions:
+            if tuple(curr_assignment) not in solutions:
 
                 for con in self.cons:
                     violated = con.violated()
@@ -613,7 +561,7 @@ class CSP:
                             f"constraint {con.name} violated: {con.violated()}"
                         )
 
-                solutions.append(curr_assignment)
+                solutions.add(tuple(curr_assignment))
                 if print_solutions:
                     print_pipes_grid(curr_assignment)
                     print(len(solutions))
@@ -621,11 +569,11 @@ class CSP:
             return len(solutions)
 
         # get an unassigned variable to assign next using manhattan distance heuristic
-        curr_var = self.manhattan_dist_to_connection(randomize_order)
+        curr_var = self.manhattan_dist_to_connection(random_start)
 
         # if the order should be randomized, shuffle the active domain such that assignments are chosen in a random order
         active_domain = curr_var.active_domain
-        if randomize_order:
+        if random_start:
             random.shuffle(active_domain)
 
         # try every active assignment for the variable
@@ -646,7 +594,7 @@ class CSP:
             # this assignment will give a full solution once everything else is assigned
             # the variables will stay assigned after returning
             if not no_active_domains:
-                self.gac_all(solutions, max_solutions, print_solutions, randomize_order)
+                self.gac_all(solutions, max_solutions, print_solutions, random_start)
 
             # dead-end (no active domains for some variable) reached, restore the active domains
             for var in pruned_domains:

@@ -1,5 +1,5 @@
 from typing import Optional
-from pipe_typings import Assignment, PipeType, PartialAssignment
+from pipes_utils import Assignment, PipeType, PartialAssignment
 from csp import Variable
 from math import sqrt
 from pipes_utils import check_connections, find_adj

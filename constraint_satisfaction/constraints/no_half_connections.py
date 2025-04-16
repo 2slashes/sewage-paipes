@@ -1,4 +1,4 @@
-from pipe_typings import PipeType
+from pipes_utils import PipeType
 from csp import Variable
 
 
