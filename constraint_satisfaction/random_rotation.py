@@ -134,17 +134,25 @@ def write_csv(
             csv_file.write(f"{row[0]},{row[1]}\n")
 
 
-def write_puzzles_csv(solutions: list[Assignment], file_path: str):
+def write_puzzles_csv(
+    solutions: list[Assignment], file_path: str, variations_per_solution: int = 1
+):
     """
     Write a CSV file where first column is the initial puzzle state and second column is the solution state.
     This uses the create_challenging_puzzle function to create the puzzle.
+
+    Args:
+        solutions: List of solution states
+        file_path: Path to write the CSV file to
+        variations_per_solution: Number of variations to generate per solution
     """
     output: list[list[str]] = []
     for solution in solutions:
-        puzzle_str, _, min_moves_to_solve = create_challenging_puzzle(solution)
-        output.append(
-            [puzzle_str, generate_one_state_str(solution), min_moves_to_solve]
-        )
+        for _ in range(variations_per_solution):
+            puzzle_str, _, min_moves_to_solve = create_challenging_puzzle(solution)
+            output.append(
+                [puzzle_str, generate_one_state_str(solution), min_moves_to_solve]
+            )
 
     with open(file_path, mode="w", newline="") as csv_file:
         # write the header "initial_state,solution_state"

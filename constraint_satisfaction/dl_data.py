@@ -29,29 +29,35 @@ def parse_args():
     )
     parser.add_argument("-n", "--size", type=int, help="Board dimension size (2-25)")
     parser.add_argument(
-        "--solutions-train",
+        "--train-solutions",
         type=int,
         help="Number of solutions for the training set",
     )
     parser.add_argument(
-        "--puzzles-train",
+        "--train-variations",
         type=int,
         help="Number of puzzles per solution for training set",
     )
     parser.add_argument(
-        "--solutions-test",
+        "--test-solutions",
         type=int,
         help="Number of solutions for the test set",
     )
     parser.add_argument(
-        "--puzzles-test",
+        "--test-variations",
         type=int,
         help="Number of puzzles per solution for test set",
     )
     parser.add_argument(
-        "--num-puzzles",
+        "--puzzle-solutions",
         type=int,
         help="Number of puzzles to generate for the network to play",
+    )
+    parser.add_argument(
+        "--puzzle-variations",
+        type=int,
+        default=1,
+        help="Number of variations to generate per puzzle solution",
     )
     parser.add_argument(
         "--gac-after-every",
@@ -75,28 +81,30 @@ def parse_args():
             parser.error("--size is required in normal mode")
         if args.size < 2 or args.size > 25:
             parser.error("Board size must be between 2 and 25")
-        if args.solutions_train is None:
-            parser.error("--solutions-train is required in normal mode")
-        if args.puzzles_train is None:
-            parser.error("--puzzles-train is required in normal mode")
-        if args.solutions_test is None:
-            parser.error("--solutions-test is required in normal mode")
-        if args.puzzles_test is None:
-            parser.error("--puzzles-test is required in normal mode")
-        if args.num_puzzles is None:
-            parser.error("--num-puzzles is required in normal mode")
+        if args.train_solutions is None:
+            parser.error("--train-solutions is required in normal mode")
+        if args.train_variations is None:
+            parser.error("--train-variations is required in normal mode")
+        if args.test_solutions is None:
+            parser.error("--test-solutions is required in normal mode")
+        if args.test_variations is None:
+            parser.error("--test-variations is required in normal mode")
+        if args.puzzle_solutions is None:
+            parser.error("--puzzle-solutions is required in normal mode")
         if args.gac_after_every < 1:
             parser.error("Number of solutions before new GAC must be at least 1")
+        if args.puzzle_variations < 1:
+            parser.error("Number of puzzle variations must be at least 1")
 
-        if args.solutions_train < 0:
+        if args.train_solutions < 0:
             parser.error("Number of training solutions cannot be negative")
-        if args.puzzles_train < 0:
+        if args.train_variations < 0:
             parser.error("Number of training puzzles per solution cannot be negative")
-        if args.solutions_test < 0:
+        if args.test_solutions < 0:
             parser.error("Number of test solutions cannot be negative")
-        if args.puzzles_test < 0:
+        if args.test_variations < 0:
             parser.error("Number of test puzzles per solution cannot be negative")
-        if args.num_puzzles < 0:
+        if args.puzzle_solutions < 0:
             parser.error("Number of puzzles to generate cannot be negative")
 
     return args
@@ -156,12 +164,10 @@ def augment_data():
     test_file = os.path.join(data_dir, "test.csv")
 
     with open(train_file, "a") as f:
-        f.write("state,actions\n")
         for puzzle, label in train_data:
             f.write(f"{puzzle},{label}\n")
 
     with open(test_file, "a") as f:
-        f.write("state,actions\n")
         for puzzle, label in test_data:
             f.write(f"{puzzle},{label}\n")
 
@@ -174,13 +180,15 @@ def main():
         return
 
     n = args.size
-    num_solutions_train = args.solutions_train
-    num_puzzles_train = args.puzzles_train
-    num_solutions_test = args.solutions_test
-    num_puzzles_test = args.puzzles_test
+    num_solutions_train = args.train_solutions
+    num_puzzles_train = args.train_variations
+    num_solutions_test = args.test_solutions
+    num_puzzles_test = args.test_variations
     gac_after_every = args.gac_after_every
 
-    total_solutions_needed = num_solutions_train + num_solutions_test + args.num_puzzles
+    total_solutions_needed = (
+        num_solutions_train + num_solutions_test + args.puzzle_solutions
+    )
     solutions: list[Assignment] = []
     t0 = time.time()
 
@@ -309,6 +317,7 @@ def main():
         write_puzzles_csv(
             puzzle_solutions,
             os.path.join(data_dir, "puzzles.csv"),
+            variations_per_solution=args.puzzle_variations,
         )
 
     t1 = time.time()
