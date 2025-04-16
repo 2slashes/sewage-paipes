@@ -66,17 +66,6 @@ def generate_all_pddl_and_state_files(
     except Exception as e:
         print(f"An error occurred: {e}")
 
-    # create the directory for state files if it doesn't exist
-    state_dir = os.path.join(curr_dir, f"../planning/states/{n}/")
-    try:
-        os.makedirs(state_dir)
-    except FileExistsError:
-        pass
-    except PermissionError:
-        print(f"Permission denied: Unable to create '{state_dir}'.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
     # track the number of files generated
     cur_num_files = 0
     # iterate through solutions. A solution represents the goal state of the puzzle.
@@ -94,6 +83,7 @@ def generate_all_pddl_and_state_files(
             )
             with open(f"{pddl_dir}problem{cur_num_files}.pddl", "w") as file:
                 file.write(pddl)
+            cur_num_files += 1
 
 
 def generate_pddl(
