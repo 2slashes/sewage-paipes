@@ -15,6 +15,7 @@ There are three files you can run directly. Run them to see the required options
   - Training and testing data is used to train the model and test its accuracy per move
   - Puzzle data are puzzles that the network will eventually play on
   - User specifies number of solutions and number of puzzles (variations) to generate per solution
+  - The --gac--after-every option is used to specify the number of solutions to generate before using separate GAC call. Solutions from a single GAC call are faster but are very similar due to GAC's backtracking nature.
   - With the `--aug` option, it augments the data located in `deep_learning/data/outlier.csv` and appends them to `train.csv` and `test.csv`
   - With the `--print` option, it prints the solution as it generates them
 - `planning_data.py`: Outputs PDDL files for the planner to solve. Output is located in `planning/pddl/problems/`
