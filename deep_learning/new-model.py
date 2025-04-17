@@ -47,6 +47,8 @@ class PipesPredictor(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
             nn.Linear(hidden_size, output_size),
         )
 
@@ -125,17 +127,8 @@ def test_loop(dataloader, model, loss_fn):
     )
 
 
-model_file_name = "model.pth"
-curr_dir = os.getcwd()
-model_file_path = os.path.join(curr_dir, model_file_name)
-model.load_state_dict(
-    torch.load(model_file_path, weights_only=True, map_location=device)
-)
-
-epochs = 5
-learning_rate = 1e-5
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
+epochs = 5
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
     train_loop(train_pipes, model, loss_fn, optimizer)
