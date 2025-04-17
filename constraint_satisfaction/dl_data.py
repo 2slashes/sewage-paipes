@@ -173,17 +173,17 @@ def augment_data():
             goals.append(goal)
             extra_moves.append(int(moves_str))
 
-    train_data = []
-    test_data = []
+    train_data: list[tuple[str, str]] = []
+    test_data: list[tuple[str, str]] = []
 
     for goal, moves in zip(goals, extra_moves):
-        puzzles_labels = []
-        num_puzzles = max(1, round(math.sqrt(moves))) * 5  # At least 1 puzzle per goal
+        puzzles_labels: list[tuple[str, str]] = []
+        num_puzzles = max(
+            1, round(math.log10(moves) * 10 + 300)
+        )  # At least 1 puzzle per goal
         for _ in range(num_puzzles):
-            puzzle_str, label = scramble_k(
-                goal, max(1, round((2 * random.random()) ** 4))
-            )
-            puzzles_labels.append((puzzle_str, label))
+            puzzle, label = scramble_k(goal, max(1, round((2 * random.random()) ** 4)))
+            puzzles_labels.append((generate_one_state_str(puzzle), label))
         # Split 75/25
         split_idx = int(len(puzzles_labels) * 0.75)
         train_data.extend(puzzles_labels[:split_idx])

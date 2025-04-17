@@ -8,7 +8,17 @@ This repository hosts the implementation of the 3 methods we used to solve vario
 
 ## Constraint Satisfaction (Puzzle Generation)
 
-Run `constraint_satisfaction/main.py` and follow the prompts to generate solvable puzzle configurations. Output files reside in `planning/problems/`
+There are three files you can run directly. Run them to see the required options:
+
+- `main.py`: Prints out all solutions given a specific $n$ x $n$ board dimension
+- `dl_data.py`: Outputs training, testing, and puzzle data for deep learning. Output is located in `deep_learning/data/`. Also can be used to augment outliers
+  - Training and testing data is used to train the model and test its accuracy per move
+  - Puzzle data are puzzles that the network will eventually play on
+  - User specifies number of solutions and number of puzzles (variations) to generate per solution
+  - The --gac--after-every option is used to specify the number of solutions to generate before using separate GAC call. Solutions from a single GAC call are faster but are very similar due to GAC's backtracking nature.
+  - With the `--aug` option, it augments the data located in `deep_learning/data/outlier.csv` and appends them to `train.csv` and `test.csv`
+  - With the `--print` option, it prints the solution as it generates them
+- `planning_data.py`: Outputs PDDL files for the planner to solve. Output is located in `planning/pddl/problems/`
 
 ## Planning
 
@@ -19,9 +29,6 @@ solve the puzzles. To do this, go into the planning directory, then run:
 docker run -it --privileged -v ./pddl:/root/pddl -w /root/pddl --rm aiplanning/planutils:latest bash -c "source ./generate_solutions"
 ```
 
-This generates solutions. `planning/solution_parser.py` parses the state and solution files to a CSV file, making it easier to work
-with in neural networks. Output file resides in `deep-learning/data/`
-
 ## Deep Learning
 
-In the `deep-learning/` directory, the dependencies are listed in `requirements.txt` and can be installed in a virtual environment or conda environment. This is still a work in progress, but the neural network resides in `main.ipynb`.
+In the `deep-learning/` directory, the dependencies are listed in `requirements.txt` and can be installed in a virtual environment or conda environment. The main entry point is `main.ipynb`, the notebook contains code and documentation for the training and solving process.
