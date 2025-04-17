@@ -10,7 +10,7 @@ This repository hosts the implementation of the 3 methods we used to solve vario
 
 There are three files you can run directly. Run them to see the required options:
 
-- `main.py`: Prints out all solutions given a specific nxn board dimension
+- `main.py`: Prints out all solutions given a specific $n$ x $n$ board dimension
 - `dl_data.py`: Outputs training, testing, and puzzle data for deep learning. Output is located in `deep_learning/data/`. Also can be used to augment outliers
   - Training and testing data is used to train the model and test its accuracy per move
   - Puzzle data are puzzles that the network will eventually play on
