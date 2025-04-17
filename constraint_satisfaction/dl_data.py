@@ -294,6 +294,7 @@ def main():
             print_solutions=args.print,
             random_start=True,
         )
+        gac_called += 1
     else:
         while len(solutions) < total_solutions_needed:
             csp = create_pipes_csp(n)
@@ -327,7 +328,7 @@ def main():
     solutions_list = [list(solution) for solution in solutions]
 
     # Only write training CSV if there are training solutions
-    if args.train_solutions > 0:
+    if args.train_solutions > 0 or args.train_solutions == -1:
         print("Writing training variations...")
         write_csv(
             solutions_list[: args.train_solutions],
@@ -336,7 +337,7 @@ def main():
         )
 
     # Only write test CSV if there are test solutions
-    if args.test_solutions > 0:
+    if args.test_solutions > 0 or args.test_solutions == -1:
         print("Writing test variations...")
         write_csv(
             solutions_list[
@@ -347,7 +348,7 @@ def main():
         )
 
     # Only write puzzles CSV if there are puzzle solutions
-    if args.puzzle_solutions > 0:
+    if args.puzzle_solutions > 0 or args.puzzle_solutions == -1:
         print("Writing puzzle variations...")
         write_puzzles_csv(
             solutions_list[args.train_solutions + args.test_solutions :],
