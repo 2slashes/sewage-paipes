@@ -179,7 +179,7 @@ def augment_data():
     for goal, moves in zip(goals, extra_moves):
         puzzles_labels: list[tuple[str, str]] = []
         num_puzzles = max(
-            1, round(math.log10(moves) * 10 + 300)
+            1, round(math.log10(moves)) * 10 + 300
         )  # At least 1 puzzle per goal
         for _ in range(num_puzzles):
             puzzle, label = scramble_k(goal, max(1, round((2 * random.random()) ** 4)))
