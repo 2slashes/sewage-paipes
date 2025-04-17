@@ -1,11 +1,5 @@
 #! /bin/bash
-
-# needs to iterate through a specified folder (or through all folders whose names are an int)
-# for each file in the folder, run the following:
-# downward --sas-file solutions/folder/file.sas domain.pddl folder/file.pddl
-# for each line in the new sas file (from top to bottom), check if it matches (regex?) with the format "action object"
-# this might need a list of all objects in the problem
-# if it does, add the current state and action to a csv file, then update the current state by applying the action
+# Implementation details can be found in the pddl/generate_solutions section in the report
 
 # Environment variables
 export PLANUTILS_PREFIX="$HOME/.planutils"

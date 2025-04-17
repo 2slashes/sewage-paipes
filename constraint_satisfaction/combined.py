@@ -12,6 +12,9 @@ from constraints.connected import (
 )
 from csp import CSP, Variable, Constraint
 
+# Creates CSP object
+# implementation details can be found in the combined.py section in the report
+
 
 def generate_domain(top: bool, right: bool, bottom: bool, left: bool) -> list[PipeType]:
     """
@@ -48,12 +51,16 @@ def generate_domain(top: bool, right: bool, bottom: bool, left: bool) -> list[Pi
         (False, False, False, True),
     ]
     if top:
+        # remove pipes that point up if the pipe is at the top of the grid
         domain = [pipe for pipe in domain if not pipe[0]]
     if bottom:
+        # remove pipes that point down if the pipe is at the bottom of the grid
         domain = [pipe for pipe in domain if not pipe[2]]
     if right:
+        # remove pipes that point right if the pipe is on the right side of the grid
         domain = [pipe for pipe in domain if not pipe[1]]
     if left:
+        # remove pipes that point left if the pipe is on the left side of the grid
         domain = [pipe for pipe in domain if not pipe[3]]
     return domain
 
@@ -81,16 +88,16 @@ def create_pipes_csp(
     all_cons: list[Constraint] = []
 
     # create binary constraints for no blocking
-    no_blocking_cons: list[Constraint] = []
+    no_half_connections_cons: list[Constraint] = []
     # start with horizontal cons
-    no_blocking_h: list[Constraint] = []
+    no_half_connections_h: list[Constraint] = []
     for i in range(n):
         for j in range(n - 1):
             left = variables[i * n + j]
             right = variables[i * n + j + 1]
             scope = [left, right]
-            name = f"no blocking horizontal {i * n + j, i * n + j + 1}"
-            no_blocking_h.append(
+            name = f"no half-connections horizontal {i * n + j, i * n + j + 1}"
+            no_half_connections_h.append(
                 Constraint(
                     name,
                     no_half_connections_validator_h,
@@ -100,14 +107,14 @@ def create_pipes_csp(
             )
 
     # vertical cons
-    no_blocking_v: list[Constraint] = []
+    no_half_connections_v: list[Constraint] = []
     for i in range(n - 1):
         for j in range(n):
             above = variables[i * n + j]
             below = variables[(i + 1) * n + j]
             scope = [above, below]
-            name = f"no blocking vertical {i * n + j, (i + 1) * n + j}"
-            no_blocking_v.append(
+            name = f"no half-connections vertical {i * n + j, (i + 1) * n + j}"
+            no_half_connections_v.append(
                 Constraint(
                     name,
                     no_half_connections_validator_v,
@@ -117,7 +124,7 @@ def create_pipes_csp(
             )
 
     # add cons
-    no_blocking_cons += no_blocking_h + no_blocking_v
+    no_half_connections_cons += no_half_connections_h + no_half_connections_v
 
     # create tree constraint
     tree_con: Constraint = Constraint("tree", tree_validator, tree_pruner, variables)
@@ -125,6 +132,6 @@ def create_pipes_csp(
     connected_con: Constraint = Constraint(
         "connected", connected_validator, connected_pruner, variables
     )
-    all_cons = no_blocking_cons + [tree_con, connected_con]
+    all_cons = no_half_connections_cons + [tree_con, connected_con]
 
     return CSP(f"Pipes_{n}x{n}", variables, all_cons)

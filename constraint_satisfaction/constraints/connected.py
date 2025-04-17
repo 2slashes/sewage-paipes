@@ -4,6 +4,9 @@ from csp import Assignment, Variable
 from math import sqrt
 from pipes_utils import find_adj, check_connections
 
+# Constraint to ensure that all pipes are connected
+# implementation details can be found in the Constraints/connected.py section in the report
+
 
 def validator(pipes: list[PipeType]) -> bool:
     """

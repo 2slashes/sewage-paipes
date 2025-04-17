@@ -1,3 +1,4 @@
+; Implementation details can be found in the pddl/domain.pddl section in the report
 (define
     (domain pipes)
     (:requirements :strips :typing :negative-preconditions)

@@ -4,6 +4,9 @@ from csp import Variable
 from math import sqrt
 from pipes_utils import check_connections, find_adj
 
+# Constraint to ensure that there are no cycles in the pipes
+# implementation details can be found in the Constraints/no_cycles.py section in the report
+
 
 def assignment_has_cycle(
     curr: int,

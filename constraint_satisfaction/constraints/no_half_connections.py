@@ -1,6 +1,10 @@
 from pipes_utils import PipeType
 from csp import Variable
 
+# Constraint to ensure no "half-connections"
+# information about half-connections can be found in the Constraint/ section in the report
+# implementation details can be found in the Constraints/no_half_connections.py section in the report
+
 
 def validator_h(pipes: list[PipeType]) -> bool:
     """

@@ -10,6 +10,9 @@ from puzzle_generation import (
     scramble_k,
 )
 
+# Generates data for the neural network to train from
+# implementation details and information regarding how to use the file can be found in the dl_data.py section in the report
+
 
 def parse_args():
     parser = argparse.ArgumentParser(

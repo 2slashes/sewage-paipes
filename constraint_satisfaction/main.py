@@ -3,6 +3,9 @@ import argparse
 from combined import create_pipes_csp
 from pipes_utils import Assignment, PipeType
 
+# Prints a visual representation of the Pipes solutions to the terminal
+# implementation details and information regarding how to use the file can be found in the main.py section of the report
+
 
 def parse_args():
     parser = argparse.ArgumentParser(

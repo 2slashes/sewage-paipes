@@ -5,6 +5,9 @@ from combined import create_pipes_csp
 from pipes_utils import Assignment, PipeType
 from puzzle_generation import scramble_all
 
+# Generates puzzles for the planner to solve
+# implementation details and information regarding how to use the file can be found in the planning_data.py section in the report
+
 
 def parse_args():
     parser = argparse.ArgumentParser(

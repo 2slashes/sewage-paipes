@@ -1,6 +1,8 @@
 from math import sqrt
 from typing import Optional
 
+# Contains some general functions used in various other Pipes CSP function implementations
+
 PipeType = tuple[bool, bool, bool, bool]
 Assignment = list[PipeType]
 PartialAssignment = list[Optional[PipeType]]

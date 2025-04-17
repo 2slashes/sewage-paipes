@@ -4,6 +4,9 @@ from pipes_utils import find_adj
 from pipes_utils import PipeType, Assignment, print_pipes_grid
 from typing import Optional, Callable
 
+# Classes for CSP
+# Implementation details can be found in the csp.py section in the report
+
 
 class Variable:
     """

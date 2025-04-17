@@ -1,6 +1,8 @@
 from pipes_utils import PipeType, Assignment
 import random
 
+# Contains functions that generate initial states from goal states
+# Implementation details can be found in the puzzle_generation.py section of the report
 
 def scramble_k(solution: Assignment, k: int) -> tuple[Assignment, str]:
     """
