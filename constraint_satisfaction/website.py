@@ -114,7 +114,7 @@ def main():
     ]
 
     # output solutions to json file
-    with open(f"../website/4.json", "w") as f:
+    with open(f"../website/{n}.json", "w") as f:
         json.dump(solutions_list, f)
 
     print(f"Time taken: {t1 - t0} seconds")
